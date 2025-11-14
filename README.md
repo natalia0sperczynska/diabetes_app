@@ -2,7 +2,21 @@
 
 A cross-platform diabetes management app.
 
-## Main Features
+## Key Features (Planned)
+
+* **Glucose Monitoring:** Integration with a glucose sensor.
+* **Activity Tracking:** Integration with Health APIs (Apple Health / Google Fit) to monitor physical activity.
+* **Meal Log:** Logging meals and carbohydrate intake.
+* **Statistics:** Charts and analytics to help with diabetes management.
+
+## Architecture
+
+This application uses **MVVM (Model-View-ViewModel)** pattern
+
+* **State Management:** `provider`
+* **UI-Logic Binding:** `ChangeNotifier`
+* **Dependency Injection (DI):** `MultiProvider` to provide ViewModels throughout the widget tree.
+* **Backend / Database:** `Firebase` (for authentication, storing user data, meals, etc.)
 
 ## Getting Started
 

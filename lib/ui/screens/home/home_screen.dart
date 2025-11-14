@@ -7,7 +7,7 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final viewModel = context.watch()<HomeViewModel>();
+    final viewModel = context.watch<HomeViewModel>();
     return Scaffold(
       body: SafeArea(
         child: Center(
