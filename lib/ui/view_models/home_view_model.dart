@@ -23,7 +23,7 @@ class HomeViewModel extends ChangeNotifier {
         _currentTitle = "Meals";
         break;
       case 2:
-        _currentTitle = "Settings";
+        _currentTitle = "Stats";
         break;
     }
     notifyListeners();
