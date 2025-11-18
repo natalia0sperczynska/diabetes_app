@@ -1,3 +1,6 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:diabetes_app/ui/widgets/snack_bars/awesome_snack_bar.dart';
+
 import '../../view_models/home_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -20,6 +23,12 @@ class HomeContent extends StatelessWidget {
           FilledButton(
             onPressed: () {
               context.read<HomeViewModel>().loadUserData();
+              SnackbarUtils.showAwesomeSnackbar(
+                context,
+                title: "Success",
+                message: "Data loaded successfully",
+                contentType: ContentType.success,
+              );
             },
             child: const Text("Load Data"),
           ),
