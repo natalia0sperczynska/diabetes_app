@@ -1,0 +1,50 @@
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../view_models/home_view_model.dart';
+
+class AppDrawer extends StatelessWidget {
+  const AppDrawer({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.watch<HomeViewModel>();
+    return Drawer(
+      child: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          const DrawerHeader(
+            decoration: BoxDecoration(color: Colors.deepPurple),
+            child: Text(
+              'Menu',
+              style: TextStyle(color: Colors.white, fontSize: 24),
+            ),
+          ),
+          ListTile(
+            title: const Text('Home'),
+            selected: viewModel.selectedIndex == 0,
+            onTap: () {
+              context.read<HomeViewModel>().setIndex(0);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('Meals'),
+            selected: viewModel.selectedIndex == 1,
+            onTap: () {
+              context.read<HomeViewModel>().setIndex(1);
+              Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            title: const Text('Setting'),
+            selected: viewModel.selectedIndex == 2,
+            onTap: () {
+              context.read<HomeViewModel>().setIndex(2);
+              Navigator.pop(context);
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
