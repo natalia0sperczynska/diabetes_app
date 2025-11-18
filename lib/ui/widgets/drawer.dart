@@ -22,6 +22,7 @@ class AppDrawer extends StatelessWidget {
             ),
           ),
           ListTile(
+            leading: const Icon(Icons.home),
             title: const Text('Home'),
             selected: viewModel.selectedIndex == 0,
             onTap: () {
@@ -30,6 +31,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.restaurant_menu),
             title: const Text('Meals'),
             selected: viewModel.selectedIndex == 1,
             onTap: () {
@@ -38,6 +40,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
+            leading: const Icon(Icons.stacked_bar_chart),
             title: const Text('Stats'),
             selected: viewModel.selectedIndex == 2,
             onTap: () {

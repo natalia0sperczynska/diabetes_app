@@ -1,4 +1,5 @@
 import 'package:diabetes_app/ui/screens/home/home_screen.dart';
+import 'package:diabetes_app/ui/themes/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'ui/view_models/home_view_model.dart';
 import 'package:provider/provider.dart';
@@ -24,9 +25,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Diabetes App',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-      ),
+      theme: AppTheme.pixelTheme,
       debugShowCheckedModeBanner: false,
       home: const HomeScreen(),
     );

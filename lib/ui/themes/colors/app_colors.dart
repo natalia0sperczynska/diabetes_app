@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class Colors{
+class AppColors {
   static const mainBlue = Color(0xFF568BD7);
   static const mainComplement = Color(0xFFD7A256);
   static const darkBlue1 = Color(0xFF345482);
@@ -9,4 +9,5 @@ class Colors{
   static const lightBlue2 = Color(0xFF5698D7);
   static const pink = Color(0xFFD756CB);
   static const green = Color(0xFF56D761);
+  static const pixelBorder = Color(0xFF6A0DAD);
 }
