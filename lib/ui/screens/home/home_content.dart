@@ -23,6 +23,7 @@ class HomeContent extends StatelessWidget {
           FilledButton(
             onPressed: () {
               context.read<HomeViewModel>().loadUserData();
+              //uzywajcie tego snack baru pleaseee
               SnackbarUtils.showAwesomeSnackbar(
                 context,
                 title: "Success",
