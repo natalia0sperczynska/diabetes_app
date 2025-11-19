@@ -4,8 +4,6 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../themes/colors/app_colors.dart';
 import '../home/home_screen.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
-import 'intro_component.dart';
-import 'intro_data.dart';
 
 class IntroductionScreen extends StatefulWidget {
   const IntroductionScreen({super.key});
@@ -99,7 +97,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
           Positioned(
             left: 0,
             right: 0,
-            bottom: 100,
+            bottom: 70,
             child: Center(
               child: SmoothPageIndicator(
                 controller: _pageController,
@@ -107,12 +105,14 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
                 onDotClicked: (index) {
                   _animateToPage(index);
                 },
-                effect: const JumpingDotEffect(
+                effect: const SwapEffect(
                   dotHeight: 10,
                   dotWidth: 10,
-                  spacing: 16,
+                  spacing: 20,
                   dotColor: AppColors.darkBlue1,
                   activeDotColor: AppColors.pink,
+                  paintStyle: PaintingStyle.fill,
+                  type: SwapType.yRotation,
                 ),
               ),
             ),
