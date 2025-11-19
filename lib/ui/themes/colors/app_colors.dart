@@ -10,4 +10,6 @@ class AppColors {
   static const pink = Color(0xFFD756CB);
   static const green = Color(0xFF56D761);
   static const pixelBorder = Color(0xFF6A0DAD);
+  static const black = Color(0xFF000000);
+  static const grey = Color(0x8000000);
 }
