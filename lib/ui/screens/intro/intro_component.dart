@@ -6,12 +6,14 @@ class IntroComponent extends StatelessWidget {
   final String title;
   final String description;
   final String image;
+  final VoidCallback? onImageTap;
 
   const IntroComponent({
     super.key,
     required this.title,
     required this.description,
     required this.image,
+    this.onImageTap,
   });
 
   @override
@@ -34,13 +36,16 @@ class IntroComponent extends StatelessWidget {
                 ),
               ],
             ),
-            child: Container(
-              padding: const EdgeInsets.all(4.0),
-              decoration: const BoxDecoration(color: AppColors.darkBlue2),
-              child: Stack(
-                children: [
-                  Image.asset(image, height: 220, fit: BoxFit.contain),
-                ],
+            child: GestureDetector(
+              onTap: onImageTap,
+              child: Container(
+                padding: const EdgeInsets.all(4.0),
+                decoration: const BoxDecoration(color: AppColors.darkBlue2),
+                child: Stack(
+                  children: [
+                    Image.asset(image, height: 220, fit: BoxFit.contain),
+                  ],
+                ),
               ),
             ),
           ),
