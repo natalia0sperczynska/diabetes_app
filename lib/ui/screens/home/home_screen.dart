@@ -1,12 +1,10 @@
-import 'package:diabetes_app/ui/screens/profile/profile_screen.dart';
-import 'package:diabetes_app/ui/screens/settings/settings_screen.dart';
-import 'package:diabetes_app/ui/screens/statistics/statistics_screen.dart';
-import 'package:flutter/material.dart' hide BottomNavigationBar;
+import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/home_view_model.dart';
 import '../../widgets/drawer.dart';
 import '../../widgets/bottom_navigation.dart';
 import '../meals/meal_screen.dart';
+import '../statistics/statistics_screen.dart';
 import 'home_content.dart';
 
 class HomeScreen extends StatelessWidget {
