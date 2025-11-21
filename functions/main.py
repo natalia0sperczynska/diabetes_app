@@ -34,7 +34,7 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
             json.dumps({
                 "value": bg.value,
                 "trend": str(bg.trend),
-                "time": str(bg.time)
+                "time": str(bg.datetime)
             }),
             status=200,
             headers={"Content-Type": "application/json"}
