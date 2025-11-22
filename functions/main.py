@@ -19,6 +19,16 @@ initialize_app()
 # to pewnie było w chuj ważne (a ja to ofc zmieniłem), ale jest solidna szansa, że nie było wazne
 @https_fn.on_request()
 def get_glucose(req: https_fn.Request) -> https_fn.Response:
+    headers = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+    }
+    
+    if req.method == "OPTIONS":
+        return https_fn.Response("", status=204, headers=headers)
+    
     try:
         # tak się ogólnie nie robi ale tonący brzytwy się chwyta
         from pydexcom import Dexcom
@@ -27,9 +37,9 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
         username = data.get('username', 'USERNAME')
         password = data.get('password', 'PASSWORD')
         
-        dexcom = Dexcom(username, password)
+        # czemu region nie wykrywa przeciez w dokumentacji jest tak wlasnie
+        dexcom = Dexcom(username=username, password=password, region='ous') 
         bg = dexcom.get_current_glucose_reading()
-        
         return https_fn.Response(
             json.dumps({
                 "value": bg.value,
@@ -37,7 +47,7 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
                 "time": str(bg.datetime)
             }),
             status=200,
-            headers={"Content-Type": "application/json"}
+            headers=headers
         )
     except Exception as e:
         return https_fn.Response(
@@ -46,7 +56,7 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
                 "type": type(e).__name__
             }),
             status=500,
-            headers={"Content-Type": "application/json"}
+            headers=headers
         )
 
 
