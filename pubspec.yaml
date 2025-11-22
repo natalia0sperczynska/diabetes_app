@@ -43,6 +43,7 @@ dependencies:
   cached_network_image: ^3.4.0
   smooth_page_indicator: ^1.2.1
   flutter_launcher_icons: ^0.14.4
+  firebase_core: ^4.2.1
 
 dev_dependencies:
 
