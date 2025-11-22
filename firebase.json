@@ -1,0 +1,39 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "diabetes-app-81f7d",
+          "appId": "1:908528538420:android:937113f50bcc8f212a0b61",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "diabetes-app-81f7d",
+          "configurations": {
+            "android": "1:908528538420:android:937113f50bcc8f212a0b61",
+            "ios": "1:908528538420:ios:64cd79c8b8ed8de42a0b61",
+            "macos": "1:908528538420:ios:64cd79c8b8ed8de42a0b61",
+            "web": "1:908528538420:web:dbd2ef3630c518fa2a0b61",
+            "windows": "1:908528538420:web:b8f81bc5b6e28b8a2a0b61"
+          }
+        }
+      }
+    }
+  },
+  "functions": {
+    "source": "functions",
+    "codebase": "default",
+    "ignore": [
+      "venv",
+      ".git",
+      "firebase-debug.log",
+      "firebase-debug.*.log",
+      "__pycache__",
+      "*.pyc",
+      "*.pyo"
+    ],
+    "runtime": "python311"
+  }
+}
