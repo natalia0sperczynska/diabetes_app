@@ -33,7 +33,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(title: Text(viewModel.currentTitle)),
       drawer: const AppDrawer(),
       body: SafeArea(child: getBody()),
-      bottomNavigationBar: const AppBottomNavigationBar(),
+      bottomNavigationBar: AppBottomNavigationBar(),
     );
   }
 }
