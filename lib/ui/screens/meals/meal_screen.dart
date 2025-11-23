@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../utils/app_assets/app_assets.dart';
 import '../../themes/colors/app_colors.dart';
+import '../../themes/buttons/meal_tracker_buttons.dart';
 import '../../view_models/meal_view_model.dart';
 import '../../widgets/pixel_input_field.dart';
 
@@ -186,15 +187,7 @@ class MealScreen extends StatelessWidget {
         Expanded(
           child: ElevatedButton(
             onPressed: viewModel.resetFields,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkBlue1,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-                side: BorderSide(color: AppColors.mainBlue, width: 2),
-              ),
-            ),
+            style: resetButtonStyle(context),
             child: Text(
               "RESET",
               style: GoogleFonts.iceland(
@@ -219,7 +212,7 @@ class MealScreen extends StatelessWidget {
                       letterSpacing: 1.2,
                     ),
                   ),
-                  backgroundColor: AppColors.green,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   behavior: SnackBarBehavior.floating,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.zero,
@@ -227,14 +220,7 @@ class MealScreen extends StatelessWidget {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
+            style: saveButtonStyle(context),
             child: Text(
               "SAVE MEAL",
               style: GoogleFonts.iceland(

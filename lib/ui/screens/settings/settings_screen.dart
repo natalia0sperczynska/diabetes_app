@@ -1,13 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../view_models/theme_view_model.dart';
+import 'color_themes_tab.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  final List<Tab> _tabs = const [
+    Tab(text: "General"),
+    Tab(text: "Color Themes"),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: _tabs.length, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final themeViewModel = Provider.of<ThemeViewModel>(context);
+    final isDarkMode = themeViewModel.themeMode == ThemeMode.dark;
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Settings")),
-      body: const Center(child: Text("Settings")),
+      appBar: AppBar(
+        title: const Text("Settings"),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: _tabs,
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          // General tab content
+          ListView(
+            children: [
+              SwitchListTile(
+                title: const Text('Dark Mode'),
+                value: isDarkMode,
+                onChanged: (value) {
+                  themeViewModel.toggleTheme();
+                },
+                secondary: Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
+              ),
+            ],
+          ),
+
+          // Color Themes tab content - placeholder to be replaced by new widget
+          const ColorThemesTab(),
+        ],
+      ),
     );
   }
 }
