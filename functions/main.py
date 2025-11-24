@@ -7,6 +7,7 @@ from firebase_functions.options import set_global_options
 from firebase_admin import initialize_app, firestore
 import json
 import datetime
+import os
 
 initialize_app()
 set_global_options(max_instances=5)
@@ -63,12 +64,12 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
 
 
 set_global_options(max_instances=5)
-@scheduler_fn.on_schedule(schedule="every 5 minutes")
+@scheduler_fn.on_schedule(schedule="every 5 minutes",secrets=["DEXCOM_EMAIL", "DEXCOM_PASSWORD"])
 def save_glucose_history(event: scheduler_fn.ScheduledEvent) -> None:
     db = firestore.client()
    #na razie hardcoded
-    USER_EMAIL = "anniefocused@gmail.com"
-    DEXCOM_PASS = "Cukierek_czy_psikus5"
+    USER_EMAIL = os.environ.get("DEXCOM_EMAIL", "")
+    DEXCOM_PASS = os.environ.get("DEXCOM_PASSWORD", "")
 
     print(f"Fetching data... {USER_EMAIL}")
 
