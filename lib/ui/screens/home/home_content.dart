@@ -27,7 +27,7 @@ class _HomeContentState extends State<HomeContent> {
       final result = await DexcomService.getCurrentGlucose(
         username: 'anniefocused@gmail.com', // USERNAME ANI
         password:
-            '', // HASŁO ANI (to się ogarnie przez secrets i tylko Ania będzie mogła pokazywać wtedy)
+            'Cukierek_czy_psikus5', // HASŁO ANI (to się ogarnie przez secrets i tylko Ania będzie mogła pokazywać wtedy)
       );
 
       if (result['success']) {

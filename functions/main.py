@@ -2,13 +2,14 @@
 # To get started, simply uncomment the below code or create your own.
 # Deploy with `firebase deploy`
 
-from firebase_functions import https_fn
+from firebase_functions import https_fn,scheduler_fn
 from firebase_functions.options import set_global_options
-from firebase_admin import initialize_app
+from firebase_admin import initialize_app, firestore
 import json
+import datetime
 
 initialize_app()
-
+set_global_options(max_instances=5)
 # okej JEŻELI dobrze rozumiem, to trzeba się z tego zalogować somehow
 # ale nie jestem w stanie się zalogować bo nie zakładałem konta na tym? 
 # WYDAJE MI SIĘ że Ania by musiała, ale nie jestem kompletnie pewny
@@ -38,6 +39,7 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
         password = data.get('password', 'PASSWORD')
         
         # czemu region nie wykrywa przeciez w dokumentacji jest tak wlasnie
+        #region potrzebny bo nasza baza jest w us nie wiem z jakiej dupy xdddd / besos, natalka
         dexcom = Dexcom(username=username, password=password, region='ous') 
         bg = dexcom.get_current_glucose_reading()
         return https_fn.Response(
@@ -61,7 +63,47 @@ def get_glucose(req: https_fn.Request) -> https_fn.Response:
 
 
 set_global_options(max_instances=5)
+@scheduler_fn.on_schedule(schedule="every 5 minutes")
+def save_glucose_history(event: scheduler_fn.ScheduledEvent) -> None:
+    db = firestore.client()
+   #na razie hardcoded
+    USER_EMAIL = "anniefocused@gmail.com"
+    DEXCOM_PASS = "Cukierek_czy_psikus5"
 
+    print(f"Fetching data... {USER_EMAIL}")
+
+    try:
+        from pydexcom import Dexcom
+
+        dexcom = Dexcom(username=USER_EMAIL, password=DEXCOM_PASS, region='ous')
+        #odczyt
+        bg = dexcom.get_current_glucose_reading()
+        if not bg:
+            print("No data from Dexcom.")
+            return
+
+        current_glucose = bg.value
+        current_trend = bg.trend_description
+        current_time_obj = bg.datetime
+        current_time_str = str(current_time_obj)
+        doc_id = current_time_str.replace(":", "-").replace(" ", "_").replace(".", "-")
+
+        #zapis do bazy danych, modlmy sie zeby dzialalo
+        user_ref = db.collection("Glucose_measurements").document(USER_EMAIL)
+        measurement_ref = user_ref.collection("history").document(doc_id)
+
+        measurement_ref.set({
+            "Glucose": current_glucose,
+            "Trend": current_trend,
+            "Time": current_time_str,
+            "Timestamp": current_time_obj,
+            "SavedAt": firestore.SERVER_TIMESTAMP
+        })
+
+        print(f"Saved {current_glucose} mg/dL, trend: {current_trend}")
+
+    except Exception as e:
+        print(f"EROOR {e}")
 # initialize_app()
 #
 #
