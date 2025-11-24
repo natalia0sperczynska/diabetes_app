@@ -11,14 +11,14 @@ class AppBottomNavigationBar extends StatelessWidget {
     final viewModel = context.watch<HomeViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
     // Define icon colors depending on active and inactive states
-    final activeColor = colorScheme.primary;
-    final inactiveColor = colorScheme.onBackground.withOpacity(0.6);
+final activeColor = Colors.white;
+final inactiveColor = colorScheme.onBackground.withOpacity(0.6);
 
-    List<Widget> items = [
-      Icon(Icons.home_outlined, color: viewModel.selectedIndex == 0 ? activeColor : inactiveColor),
-      Icon(Icons.restaurant_menu_outlined, color: viewModel.selectedIndex == 1 ? activeColor : inactiveColor),
-      Icon(Icons.stacked_bar_chart_outlined, color: viewModel.selectedIndex == 2 ? activeColor : inactiveColor),
-    ];
+List<Widget> items = [
+  Icon(Icons.home, color: viewModel.selectedIndex == 0 ? activeColor : inactiveColor),
+  Icon(Icons.restaurant_menu, color: viewModel.selectedIndex == 1 ? activeColor : inactiveColor),
+  Icon(Icons.stacked_bar_chart, color: viewModel.selectedIndex == 2 ? activeColor : inactiveColor),
+];
 
     return CurvedNavigationBar(
       items: items,

@@ -1,11 +1,9 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
-import 'package:diabetes_app/ui/themes/theme/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'ui/view_models/home_view_model.dart';
 import 'ui/view_models/meal_view_model.dart';
 import 'package:provider/provider.dart';
 
-import 'package:provider/provider.dart';
 import 'ui/view_models/theme_view_model.dart';
 
 void main() {
