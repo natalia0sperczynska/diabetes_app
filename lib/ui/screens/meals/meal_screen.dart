@@ -25,7 +25,7 @@ class MealScreen extends StatelessWidget {
             style: GoogleFonts.iceland(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.mainComplement,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 2.0,
             ),
           ),
@@ -70,6 +70,7 @@ class MealScreen extends StatelessWidget {
   }
 
   Widget _buildLogoSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: GestureDetector(
         onTap: () {
@@ -80,7 +81,7 @@ class MealScreen extends StatelessWidget {
                 "You're already on the Meal Tracker!",
                 style: GoogleFonts.iceland(fontSize: 18, letterSpacing: 1.2),
               ),
-              backgroundColor: AppColors.mainBlue,
+              backgroundColor: colorScheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
@@ -92,8 +93,8 @@ class MealScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            color: AppColors.darkBlue1,
-            border: Border.all(color: AppColors.mainBlue, width: 3),
+            color: colorScheme.surface,
+            border: Border.all(color: colorScheme.primary, width: 3),
             borderRadius: BorderRadius.zero,
           ),
           child: Image.asset(
