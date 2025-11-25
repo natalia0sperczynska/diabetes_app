@@ -37,7 +37,8 @@ class MealScreen extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          _buildDigestibleCarbsDisplay(viewModel),
+          _buildDigestibleCarbsDisplay(viewModel, context),
+
 
           const SizedBox(height: 24),
 
@@ -137,12 +138,13 @@ class MealScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDigestibleCarbsDisplay(MealViewModel viewModel) {
+  Widget _buildDigestibleCarbsDisplay(MealViewModel viewModel, BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: AppColors.darkBlue1,
-        border: Border.all(color: AppColors.green, width: 3),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.primary, width: 3),
         borderRadius: BorderRadius.zero,
       ),
       child: Column(
@@ -152,7 +154,7 @@ class MealScreen extends StatelessWidget {
             style: GoogleFonts.iceland(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppColors.green,
+              color: colorScheme.primary,
               letterSpacing: 1.5,
             ),
           ),
@@ -162,7 +164,7 @@ class MealScreen extends StatelessWidget {
             style: GoogleFonts.iceland(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: colorScheme.onSurface,
               letterSpacing: 2.0,
             ),
           ),
@@ -171,7 +173,7 @@ class MealScreen extends StatelessWidget {
             "Net Carbs = (${viewModel.carbsPer100g.toStringAsFixed(1)} - ${viewModel.fiberPer100g.toStringAsFixed(1)}) × ${viewModel.gramsEaten.toStringAsFixed(0)}g / 100",
             style: GoogleFonts.iceland(
               fontSize: 14,
-              color: Colors.white70,
+              color: colorScheme.onSurface.withOpacity(0.7),
               letterSpacing: 1.0,
             ),
             textAlign: TextAlign.center,
