@@ -48,6 +48,555 @@ class AppTheme {
       ),
 
       drawerTheme: const DrawerThemeData(backgroundColor: AppColors.darkBlue2),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.mainBlue,
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.zero,
+          ),
+        ),
+      ),
+    );
+  }
+
+  static ThemeData get pixelLightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.light().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+
+        primary: AppColors.lightBlue1,
+        onPrimary: Colors.black,
+
+        secondary: AppColors.pink,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: Colors.white,
+        onSurface: Colors.black,
+
+        surfaceContainer: Color(0xFFF6F6F6),
+        onSurfaceVariant: Colors.black,
+
+        background: Color(0xFFF6F6F6),
+        onBackground: Colors.black,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: Color(0xFFF6F6F6),
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: const DrawerThemeData(backgroundColor: Colors.white),
+    );
+  }
+
+  // Pope Yellow Dark Theme
+  static ThemeData get popeYellowTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.dark().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+
+        primary: AppColors.popeYellowPrimaryDark,
+        onPrimary: AppColors.popeYellowOnPrimaryDark,
+
+        secondary: AppColors.popeYellowSecondaryDark,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.popeYellowSurfaceDark,
+        onSurface: Colors.white,
+
+        surfaceContainer: AppColors.popeYellowSurfaceDark,
+        onSurfaceVariant: Colors.white,
+
+        background: AppColors.popeYellowBackgroundDark,
+        onBackground: Colors.white,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.popeYellowBackgroundDark,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.popeYellowSurfaceDark,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.popeYellowBackgroundDark),
+    );
+  }
+
+  // Pope Yellow Light Theme
+  static ThemeData get popeYellowLightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.light().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+
+        primary: AppColors.popeYellowPrimaryLight,
+        onPrimary: AppColors.popeYellowOnPrimaryLight,
+
+        secondary: AppColors.popeYellowSecondaryLight,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.popeYellowSurfaceLight,
+        onSurface: Colors.black,
+
+        surfaceContainer: AppColors.popeYellowSurfaceLight,
+        onSurfaceVariant: Colors.black,
+
+        background: AppColors.popeYellowBackgroundLight,
+        onBackground: Colors.black,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.popeYellowBackgroundLight,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.popeYellowSurfaceLight,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.popeYellowBackgroundLight),
+    );
+  }
+
+  // Forest Green Dark Theme
+  static ThemeData get forestGreenTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.dark().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+
+        primary: AppColors.forestGreenPrimaryDark,
+        onPrimary: AppColors.forestGreenOnPrimaryDark,
+
+        secondary: AppColors.forestGreenSecondaryDark,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.forestGreenSurfaceDark,
+        onSurface: Colors.white,
+
+        surfaceContainer: AppColors.forestGreenSurfaceDark,
+        onSurfaceVariant: Colors.white,
+
+        background: AppColors.forestGreenBackgroundDark,
+        onBackground: Colors.white,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.forestGreenBackgroundDark,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.forestGreenSurfaceDark,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.forestGreenBackgroundDark),
+    );
+  }
+
+  // Forest Green Light Theme
+  static ThemeData get forestGreenLightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.light().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+
+        primary: AppColors.forestGreenPrimaryLight,
+        onPrimary: AppColors.forestGreenOnPrimaryLight,
+
+        secondary: AppColors.forestGreenSecondaryLight,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.forestGreenSurfaceLight,
+        onSurface: Colors.black,
+
+        surfaceContainer: AppColors.forestGreenSurfaceLight,
+        onSurfaceVariant: Colors.black,
+
+        background: AppColors.forestGreenBackgroundLight,
+        onBackground: Colors.black,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.forestGreenBackgroundLight,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.forestGreenSurfaceLight,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.forestGreenBackgroundLight),
+    );
+  }
+
+  // Sunset Orange dark theme
+  static ThemeData get sunsetOrangeTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.dark().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+
+        primary: AppColors.sunsetOrangePrimaryDark,
+        onPrimary: AppColors.sunsetOrangeOnPrimaryDark,
+
+        secondary: AppColors.sunsetOrangeSecondaryDark,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.sunsetOrangeSurfaceDark,
+        onSurface: Colors.white,
+
+        surfaceContainer: AppColors.sunsetOrangeSurfaceDark,
+        onSurfaceVariant: Colors.white,
+
+        background: AppColors.sunsetOrangeBackgroundDark,
+        onBackground: Colors.white,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.sunsetOrangeBackgroundDark,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.sunsetOrangeSurfaceDark,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.sunsetOrangeBackgroundDark),
+    );
+  }
+
+  // Sunset Orange light theme
+  static ThemeData get sunsetOrangeLightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.light().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+
+        primary: AppColors.sunsetOrangePrimaryLight,
+        onPrimary: AppColors.sunsetOrangeOnPrimaryLight,
+
+        secondary: AppColors.sunsetOrangeSecondaryLight,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.sunsetOrangeSurfaceLight,
+        onSurface: Colors.black,
+
+        surfaceContainer: AppColors.sunsetOrangeSurfaceLight,
+        onSurfaceVariant: Colors.black,
+
+        background: AppColors.sunsetOrangeBackgroundLight,
+        onBackground: Colors.black,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.sunsetOrangeBackgroundLight,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.sunsetOrangeSurfaceLight,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.sunsetOrangeBackgroundLight),
+    );
+  }
+
+  // Deep Purple dark theme
+  static ThemeData get deepPurpleTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.dark().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+
+        primary: AppColors.deepPurplePrimaryDark,
+        onPrimary: AppColors.deepPurpleOnPrimaryDark,
+
+        secondary: AppColors.deepPurpleSecondaryDark,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.deepPurpleSurfaceDark,
+        onSurface: Colors.white,
+
+        surfaceContainer: AppColors.deepPurpleSurfaceDark,
+        onSurfaceVariant: Colors.white,
+
+        background: AppColors.deepPurpleBackgroundDark,
+        onBackground: Colors.white,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.deepPurpleBackgroundDark,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.deepPurpleSurfaceDark,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.deepPurpleBackgroundDark),
+    );
+  }
+
+  // Deep Purple light theme
+  static ThemeData get deepPurpleLightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.light().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+
+        primary: AppColors.deepPurplePrimaryLight,
+        onPrimary: AppColors.deepPurpleOnPrimaryLight,
+
+        secondary: AppColors.deepPurpleSecondaryLight,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.deepPurpleSurfaceLight,
+        onSurface: Colors.black,
+
+        surfaceContainer: AppColors.deepPurpleSurfaceLight,
+        onSurfaceVariant: Colors.black,
+
+        background: AppColors.deepPurpleBackgroundLight,
+        onBackground: Colors.black,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.deepPurpleBackgroundLight,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.deepPurpleSurfaceLight,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.deepPurpleBackgroundLight),
+    );
+  }
+
+  // Ocean Blue dark theme
+  static ThemeData get oceanBlueTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.dark().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+
+        primary: AppColors.oceanBluePrimaryDark,
+        onPrimary: AppColors.oceanBlueOnPrimaryDark,
+
+        secondary: AppColors.oceanBlueSecondaryDark,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.oceanBlueSurfaceDark,
+        onSurface: Colors.white,
+
+        surfaceContainer: AppColors.oceanBlueSurfaceDark,
+        onSurfaceVariant: Colors.white,
+
+        background: AppColors.oceanBlueBackgroundDark,
+        onBackground: Colors.white,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.oceanBlueBackgroundDark,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.oceanBlueSurfaceDark,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.white,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundDark),
+    );
+  }
+
+  // Ocean Blue light theme
+  static ThemeData get oceanBlueLightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.light().textTheme),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.light,
+
+        primary: AppColors.oceanBluePrimaryLight,
+        onPrimary: AppColors.oceanBlueOnPrimaryLight,
+
+        secondary: AppColors.oceanBlueSecondaryLight,
+        onSecondary: Colors.white,
+
+        tertiary: AppColors.mainComplement,
+
+        surface: AppColors.oceanBlueSurfaceLight,
+        onSurface: Colors.black,
+
+        surfaceContainer: AppColors.oceanBlueSurfaceLight,
+        onSurfaceVariant: Colors.black,
+
+        background: AppColors.oceanBlueBackgroundLight,
+        onBackground: Colors.black,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.oceanBlueBackgroundLight,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.oceanBlueSurfaceLight,
+        foregroundColor: Colors.black,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: Colors.black,
+          letterSpacing: 1.5,
+        ),
+      ),
+
+      drawerTheme: DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundLight),
     );
   }
 }

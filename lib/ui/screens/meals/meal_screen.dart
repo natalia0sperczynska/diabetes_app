@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../utils/app_assets/app_assets.dart';
 import '../../themes/colors/app_colors.dart';
+import '../../themes/buttons/meal_tracker_buttons.dart';
 import '../../view_models/meal_view_model.dart';
 import '../../widgets/pixel_input_field.dart';
 
@@ -24,7 +25,7 @@ class MealScreen extends StatelessWidget {
             style: GoogleFonts.iceland(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: AppColors.mainComplement,
+              color: Theme.of(context).colorScheme.primary,
               letterSpacing: 2.0,
             ),
           ),
@@ -36,7 +37,8 @@ class MealScreen extends StatelessWidget {
 
           const SizedBox(height: 32),
 
-          _buildDigestibleCarbsDisplay(viewModel),
+          _buildDigestibleCarbsDisplay(viewModel, context),
+
 
           const SizedBox(height: 24),
 
@@ -68,6 +70,7 @@ class MealScreen extends StatelessWidget {
   }
 
   Widget _buildLogoSection(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Center(
       child: GestureDetector(
         onTap: () {
@@ -78,7 +81,7 @@ class MealScreen extends StatelessWidget {
                 "You're already on the Meal Tracker!",
                 style: GoogleFonts.iceland(fontSize: 18, letterSpacing: 1.2),
               ),
-              backgroundColor: AppColors.mainBlue,
+              backgroundColor: colorScheme.primary,
               behavior: SnackBarBehavior.floating,
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
@@ -90,8 +93,8 @@ class MealScreen extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16.0),
           decoration: BoxDecoration(
-            color: AppColors.darkBlue1,
-            border: Border.all(color: AppColors.mainBlue, width: 3),
+            color: colorScheme.surface,
+            border: Border.all(color: colorScheme.primary, width: 3),
             borderRadius: BorderRadius.zero,
           ),
           child: Image.asset(
@@ -136,12 +139,13 @@ class MealScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDigestibleCarbsDisplay(MealViewModel viewModel) {
+  Widget _buildDigestibleCarbsDisplay(MealViewModel viewModel, BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(20.0),
       decoration: BoxDecoration(
-        color: AppColors.darkBlue1,
-        border: Border.all(color: AppColors.green, width: 3),
+        color: colorScheme.surface,
+        border: Border.all(color: colorScheme.primary, width: 3),
         borderRadius: BorderRadius.zero,
       ),
       child: Column(
@@ -151,7 +155,7 @@ class MealScreen extends StatelessWidget {
             style: GoogleFonts.iceland(
               fontSize: 22,
               fontWeight: FontWeight.bold,
-              color: AppColors.green,
+              color: colorScheme.primary,
               letterSpacing: 1.5,
             ),
           ),
@@ -161,7 +165,7 @@ class MealScreen extends StatelessWidget {
             style: GoogleFonts.iceland(
               fontSize: 36,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: colorScheme.onSurface,
               letterSpacing: 2.0,
             ),
           ),
@@ -170,7 +174,7 @@ class MealScreen extends StatelessWidget {
             "Net Carbs = (${viewModel.carbsPer100g.toStringAsFixed(1)} - ${viewModel.fiberPer100g.toStringAsFixed(1)}) × ${viewModel.gramsEaten.toStringAsFixed(0)}g / 100",
             style: GoogleFonts.iceland(
               fontSize: 14,
-              color: Colors.white70,
+              color: colorScheme.onSurface.withOpacity(0.7),
               letterSpacing: 1.0,
             ),
             textAlign: TextAlign.center,
@@ -186,15 +190,7 @@ class MealScreen extends StatelessWidget {
         Expanded(
           child: ElevatedButton(
             onPressed: viewModel.resetFields,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.darkBlue1,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-                side: BorderSide(color: AppColors.mainBlue, width: 2),
-              ),
-            ),
+            style: resetButtonStyle(context),
             child: Text(
               "RESET",
               style: GoogleFonts.iceland(
@@ -219,7 +215,7 @@ class MealScreen extends StatelessWidget {
                       letterSpacing: 1.2,
                     ),
                   ),
-                  backgroundColor: AppColors.green,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
                   behavior: SnackBarBehavior.floating,
                   shape: const RoundedRectangleBorder(
                     borderRadius: BorderRadius.zero,
@@ -227,14 +223,7 @@ class MealScreen extends StatelessWidget {
                 ),
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.green,
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
+            style: saveButtonStyle(context),
             child: Text(
               "SAVE MEAL",
               style: GoogleFonts.iceland(
