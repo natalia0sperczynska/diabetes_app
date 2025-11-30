@@ -16,8 +16,9 @@ final inactiveColor = colorScheme.onBackground.withOpacity(0.6);
 
 List<Widget> items = [
   Icon(Icons.home, color: viewModel.selectedIndex == 0 ? activeColor : inactiveColor),
-  Icon(Icons.restaurant_menu, color: viewModel.selectedIndex == 1 ? activeColor : inactiveColor),
-  Icon(Icons.stacked_bar_chart, color: viewModel.selectedIndex == 2 ? activeColor : inactiveColor),
+  Icon(Icons.calculate, color: viewModel.selectedIndex == 1 ? activeColor : inactiveColor),
+  Icon(Icons.restaurant_menu, color: viewModel.selectedIndex == 2 ? activeColor : inactiveColor),
+  Icon(Icons.stacked_bar_chart, color: viewModel.selectedIndex == 3 ? activeColor : inactiveColor),
 ];
 
     return CurvedNavigationBar(

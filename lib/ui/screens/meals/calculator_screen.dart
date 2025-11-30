@@ -7,8 +7,8 @@ import '../../themes/buttons/meal_tracker_buttons.dart';
 import '../../view_models/meal_view_model.dart';
 import '../../widgets/pixel_input_field.dart';
 
-class MealScreen extends StatelessWidget {
-  const MealScreen({super.key});
+class CalculatorScreen extends StatelessWidget {
+  const CalculatorScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
