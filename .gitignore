@@ -89,3 +89,7 @@ Thumbs.db
 # Firebase
 google-services.json
 android/app/google-services.json
+
+# Platform-specific generated files (to stop git tracking the files you modified)
+*generated_plugin_registrant.*
+*generated_plugins.cmake
