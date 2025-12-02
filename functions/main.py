@@ -105,6 +105,102 @@ def save_glucose_history(event: scheduler_fn.ScheduledEvent) -> None:
 
     except Exception as e:
         print(f"EROOR {e}")
+
+@https_fn.on_request(secrets=["DEXCOM_EMAIL", "DEXCOM_PASSWORD"])
+def get_last_glucose_measurement(req: https_fn.Request) -> https_fn.Response:
+    USER_EMAIL = os.environ.get("DEXCOM_EMAIL", "")
+    DEXCOM_PASS = os.environ.get("DEXCOM_PASSWORD", "")
+
+    headers = {
+        "Content-Type": "application/json",
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type",
+    }
+
+    if req.method == "OPTIONS":
+        return https_fn.Response("", status=204, headers=headers)
+
+    final_glucose = None
+    final_trend = None
+    final_time = None
+    source = "unknown"
+    try:
+        from pydexcom import Dexcom
+        data = req.get_json() if req.get_json() else {}
+        # jesli jest email w secrets to go uzywamy
+        user_to_use = USER_EMAIL if USER_EMAIL else data.get('username', '')
+        pass_to_use = DEXCOM_PASS if DEXCOM_PASS else data.get('password', '')
+
+        dexcom = Dexcom(username=user_to_use, password=pass_to_use, region='ous')
+
+        # live zapis
+        bg = dexcom.get_current_glucose_reading()
+        if bg:
+            final_glucose = bg.value
+            final_trend = str(bg.trend)
+            final_time = str(bg.datetime)
+            source = "live_dexcom"
+        else:
+            print("No live readings, checking history...")
+            # ostatni zapis z 24 godzin historii
+            readings = dexcom.get_glucose_readings(minutes=1440)
+            if readings:
+                bg_last = max(readings, key=lambda r: r.datetime)
+                final_glucose = bg_last.value
+                final_trend = str(bg_last.trend)
+                final_time = str(bg_last.datetime)
+                source = "history_dexcom_24h"
+            else:
+                print("No history readings")
+
+    except Exception as e:
+        print(f"Dexcom error: {e}, reading from database...")
+
+    # jak nic nie ma to bierzemy ostatni zapis z firebase
+    if final_glucose is None:
+        try:
+            db = firestore.client()
+            email_target = USER_EMAIL
+
+            docs = db.collection("Glucose_measurements")\
+                     .document(email_target)\
+                     .collection("history")\
+                     .order_by("Timestamp", direction=firestore.Query.DESCENDING)\
+                     .limit(1)\
+                     .stream()
+
+            for doc in docs:
+                doc_data = doc.to_dict()
+                final_glucose = doc_data.get('Glucose')
+                final_trend = doc_data.get('Trend')
+                final_time = doc_data.get('Time')
+                source = "firestore_backup"
+
+        except Exception as db_e:
+             print(f"Database error: {db_e}")
+
+    if final_glucose is not None:
+        return https_fn.Response(
+            json.dumps({
+                "success": True,
+                "value": final_glucose,
+                "trend": final_trend,
+                "time": final_time,
+                "source": source
+            }),
+            status=200,
+            headers=headers
+        )
+    else:
+        return https_fn.Response(
+            json.dumps({
+                "success": False,
+                "error": "No data available from Dexcom (Live/24h) or Database."
+            }),
+            status=404,
+            headers=headers
+        )
 # initialize_app()
 #
 #

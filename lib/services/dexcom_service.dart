@@ -5,6 +5,8 @@ class DexcomService {
   // URL funkcji po deployu (CHYBA JEŻELI DOBRZE ROZUMIEM)
   static const String _functionUrl =
       'https://us-central1-diabetes-app-81f7d.cloudfunctions.net/get_glucose';
+  static const String _functionUrl_get_last =
+      'https://us-central1-diabetes-app-81f7d.cloudfunctions.net/get_last_glucose_measurement';
 
   /// W TEORII pobiera odczyt z DEXCOMA
   ///
@@ -27,7 +29,7 @@ class DexcomService {
   }) async {
     try {
       final response = await http.post(
-        Uri.parse(_functionUrl),
+        Uri.parse(_functionUrl_get_last),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'username': username, 'password': password}),
       );
