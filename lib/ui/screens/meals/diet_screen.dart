@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_barcode_scanning/google_mlkit_barcode_scanning.dart';
+import 'package:camera/camera.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class Meal {
   final String name;
@@ -16,198 +20,281 @@ class DietScreen extends StatefulWidget {
 }
 
 class _DietScreenState extends State<DietScreen> {
-  final int dailyCalorieGoal = 2500;
-  int caloriesConsumed = 1850;
-  final int proteinGoal = 150;
-  int proteinConsumed = 110;
-  final int fatGoal = 80;
-  int fatConsumed = 65;
-  final int carbGoal = 250;
-  int carbConsumed = 180;
+  final List<Meal> meals = [];
 
-  final List<Meal> meals = [
-    Meal('Breakfast: Oatmeal', 450, 'P: 15g, F: 10g, C: 65g'),
-    Meal('Lunch: Chicken Salad', 650, 'P: 45g, F: 30g, C: 40g'),
-    Meal('Dinner: Pasta with Meatballs', 750, 'P: 50g, F: 25g, C: 75g'),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
-    final int remainingCalories = dailyCalorieGoal - caloriesConsumed;
-    final double calorieProgress = caloriesConsumed / dailyCalorieGoal;
-
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Today\'s Diet', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: colorScheme.primary,
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Go to settings...')),
-              );
-            },
-          ),
-        ],
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: <Widget>[
-          _buildSummaryCard(colorScheme, remainingCalories, calorieProgress),
-
-          const SizedBox(height: 20),
-
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Your Meals',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onBackground,
-                ),
-              ),
-              TextButton.icon(
-                icon: const Icon(Icons.add),
-                label: const Text('Add Meal'),
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Open Add Meal screen...')),
-                  );
-                },
-              ),
-            ],
-          ),
-          const Divider(),
-
-          ...meals.map((meal) => _buildMealListItem(colorScheme, meal)).toList(),
-
-          const SizedBox(height: 100),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Quick Add Food...')),
-          );
-        },
-        backgroundColor: colorScheme.primary,
-        child: const Icon(Icons.fastfood, color: Colors.white),
+  Future<void> openBarcodeCamera() async {
+    final cameras = await availableCameras();
+    final camera = cameras.first;
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => BarcodeScannerView(camera: camera, onScan: _onBarcodeScanned),
       ),
     );
   }
 
-  Widget _buildSummaryCard(ColorScheme colorScheme, int remainingCalories, double calorieProgress) {
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-      child: Padding(
+  void _onBarcodeScanned(String code) async {
+    final product = await fetchProduct(code);
+    if (product == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Product not found.')),
+      );
+      return;
+    }
+    _showMealAddDialog(product);
+  }
+
+  Future<Map<String, dynamic>?> fetchProduct(String barcode) async {
+    final url = Uri.parse("https://world.openfoodfacts.org/api/v0/product/$barcode.json");
+    final res = await http.get(url);
+    if (res.statusCode != 200) return null;
+    final data = json.decode(res.body);
+    if (data['status'] != 1) return null;
+    return data['product'];
+  }
+
+  void _showMealAddDialog(Map<String, dynamic> product) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text("Add ${product['product_name'] ?? 'Unknown'} to:"),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _mealTarget("Breakfast", product),
+              _mealTarget("Lunch", product),
+              _mealTarget("Dinner", product),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                child: const Text("View Full Nutrition Info"),
+                onPressed: () {
+                  Navigator.pop(context);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => ProductDetailsScreen(product: product),
+                    ),
+                  );
+                },
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _mealTarget(String label, Map<String, dynamic> p) {
+    final kcal = ((p['nutriments']?['energy-kcal_100g']) ?? 0).round();
+    final protein = ((p['nutriments']?['proteins_100g']) ?? 0).round();
+    final fat = ((p['nutriments']?['fat_100g']) ?? 0).round();
+    final carbs = ((p['nutriments']?['carbohydrates_100g']) ?? 0).round();
+
+    return ListTile(
+      title: Text(label),
+      onTap: () {
+        setState(() {
+          meals.add(
+            Meal(
+              "$label: ${p['product_name']}",
+              kcal,
+              "P: $protein g, F: $fat g, C: $carbs g",
+            ),
+          );
+        });
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  void _manualBarcodeInput() {
+    final controller = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text("Enter barcode manually"),
+        content: TextField(
+          controller: controller,
+          decoration: const InputDecoration(hintText: "e.g. 5901234123457"),
+          keyboardType: TextInputType.number,
+        ),
+        actions: [
+          TextButton(
+            child: const Text("Cancel"),
+            onPressed: () => Navigator.pop(context),
+          ),
+          ElevatedButton(
+            child: const Text("Search"),
+            onPressed: () {
+              Navigator.pop(context);
+              _onBarcodeScanned(controller.text.trim());
+            },
+          )
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Diet Tracker"),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.qr_code_scanner),
+            onPressed: openBarcodeCamera,
+          ),
+          IconButton(
+            icon: const Icon(Icons.keyboard),
+            onPressed: _manualBarcodeInput,
+          ),
+        ],
+      ),
+      body: ListView(
+        children: [
+          for (var meal in meals)
+            ListTile(
+              title: Text(meal.name),
+              subtitle: Text(meal.macros),
+              trailing: Text("${meal.calories} kcal"),
+            )
+        ],
+      ),
+    );
+  }
+}
+
+// i used ML google kit (mowie wam, jesli googlowskie to musi dzialac dobrze)
+class BarcodeScannerView extends StatefulWidget {
+  final CameraDescription camera;
+  final Function(String) onScan;
+
+  const BarcodeScannerView({required this.camera, required this.onScan, super.key});
+
+  @override
+  State<BarcodeScannerView> createState() => _BarcodeScannerViewState();
+}
+
+class _BarcodeScannerViewState extends State<BarcodeScannerView> {
+  late CameraController controller;
+  late BarcodeScanner scanner;
+  bool scanning = true;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = CameraController(widget.camera, ResolutionPreset.medium);
+    scanner = BarcodeScanner(formats: [BarcodeFormat.ean13, BarcodeFormat.ean8, BarcodeFormat.upca, BarcodeFormat.upce]);
+
+    controller.initialize().then((_) {
+      if (!mounted) return;
+      controller.startImageStream(_processCameraImage);
+      setState(() {});
+    });
+  }
+
+  Future<void> _processCameraImage(CameraImage img) async {
+    if (!scanning) return;
+
+    final plane = img.planes.first;
+    final inputImage = InputImage.fromBytes(
+      bytes: plane.bytes,
+      metadata: InputImageMetadata(
+        size: Size(img.width.toDouble(), img.height.toDouble()),
+        rotation: InputImageRotation.rotation0deg,
+        format: InputImageFormat.nv21,
+        bytesPerRow: plane.bytesPerRow,
+      ),
+    );
+
+    final barcodes = await scanner.processImage(inputImage);
+
+    if (barcodes.isNotEmpty) {
+      scanning = false;
+      final value = barcodes.first.rawValue;
+      if (value != null) {
+        widget.onScan(value);
+        if (mounted) Navigator.pop(context);
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    scanner.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!controller.value.isInitialized) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    return Scaffold(
+      body: Stack(
+        children: [
+          CameraPreview(controller),
+          Align(
+            alignment: Alignment.topCenter,
+            child: Container(
+              margin: const EdgeInsets.only(top: 40),
+              padding: const EdgeInsets.all(10),
+              color: Colors.black54,
+              child: const Text(
+                "Scan a barcode",
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+}
+
+class ProductDetailsScreen extends StatelessWidget {
+  final Map<String, dynamic> product;
+  const ProductDetailsScreen({required this.product, super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final nutriments = product['nutriments'] ?? {};
+
+    return Scaffold(
+      appBar: AppBar(title: Text(product['product_name'] ?? 'Product Details')),
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        child: ListView(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Remaining',
-                      style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withOpacity(0.7)),
-                    ),
-                    Text(
-                      '$remainingCalories kcal',
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                Text(
-                  'Goal: $dailyCalorieGoal kcal',
-                  style: TextStyle(fontSize: 14, color: colorScheme.onSurface.withOpacity(0.7)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            LinearProgressIndicator(
-              value: calorieProgress,
-              backgroundColor: colorScheme.primary.withOpacity(0.2),
-              color: colorScheme.primary,
-              minHeight: 10,
-              borderRadius: BorderRadius.circular(5),
-            ),
+            Text(product['product_name'] ?? 'Unknown', style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
             const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildMacroItem(colorScheme, 'Protein', proteinConsumed, proteinGoal),
-                _buildMacroItem(colorScheme, 'Fat', fatConsumed, fatGoal),
-                _buildMacroItem(colorScheme, 'Carbs', carbConsumed, carbGoal),
-              ],
-            ),
+            _nutriItem("Calories (100g)", nutriments['energy-kcal_100g']?.toString() ?? "-"),
+            _nutriItem("Proteins (100g)", nutriments['proteins_100g']?.toString() ?? "-"),
+            _nutriItem("Fat (100g)", nutriments['fat_100g']?.toString() ?? "-"),
+            _nutriItem("Carbs (100g)", nutriments['carbohydrates_100g']?.toString() ?? "-"),
+            _nutriItem("Sugars (100g)", nutriments['sugars_100g']?.toString() ?? "-"),
+            _nutriItem("Salt (100g)", nutriments['salt_100g']?.toString() ?? "-"),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildMacroItem(ColorScheme colorScheme, String label, int consumed, int goal) {
-    double progress = consumed / goal;
-    return Column(
-      children: [
-        Text(
-          label,
-          style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-        ),
-        const SizedBox(height: 5),
-        SizedBox(
-          width: 60,
-          child: LinearProgressIndicator(
-            value: progress,
-            backgroundColor: colorScheme.onSurface.withOpacity(0.1),
-            color: colorScheme.secondary,
-            minHeight: 8,
-          ),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          '$consumed / ${goal}g',
-          style: TextStyle(fontSize: 12, color: colorScheme.onSurface.withOpacity(0.7)),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildMealListItem(ColorScheme colorScheme, Meal meal) {
-    return ListTile(
-      leading: Icon(
-        Icons.circle,
-        size: 10,
-        color: colorScheme.primary,
+  Widget _nutriItem(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 16)),
+          Text(value, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+        ],
       ),
-      title: Text(
-        meal.name,
-        style: const TextStyle(fontWeight: FontWeight.w500),
-      ),
-      subtitle: Text(meal.macros),
-      trailing: Text(
-        '${meal.calories} kcal',
-        style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.primary),
-      ),
-      onTap: () {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Viewing details for ${meal.name}')),
-        );
-      },
     );
   }
 }
