@@ -6,17 +6,38 @@ class StatisticsViewModel extends ChangeNotifier {
   List<FlSpot> _glucoseSpots = [];
   bool _isLoading = false;
   String _errorMessage = '';
+  DateTime _selectedDate;
 
   List<FlSpot> get glucoseSpots => _glucoseSpots;
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
+  DateTime get selectedDate => _selectedDate;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   // Using the same email as seen in HomeContent
   final String _userEmail = 'anniefocused@gmail.com'; 
 
-  StatisticsViewModel() {
+  StatisticsViewModel() : _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day) {
     fetchGlucoseData();
+  }
+
+  void updateSelectedDate(DateTime date) {
+    _selectedDate = DateTime(date.year, date.month, date.day);
+    fetchGlucoseData();
+  }
+  
+  void previousDay() {
+    updateSelectedDate(_selectedDate.subtract(const Duration(days: 1)));
+  }
+
+  void nextDay() {
+    updateSelectedDate(_selectedDate.add(const Duration(days: 1)));
+  }
+
+  bool get canGoNext {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return !_selectedDate.isAtSameMomentAs(today);
   }
 
   Future<void> fetchGlucoseData() async {
@@ -25,49 +46,40 @@ class StatisticsViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      final startOfDay = _selectedDate;
+      final endOfDay = startOfDay.add(const Duration(days: 1));
+
       final querySnapshot = await _firestore
           .collection('Glucose_measurements')
           .doc(_userEmail)
           .collection('history')
-          .orderBy('Timestamp', descending: true)
-          .limit(288) // approx 24 hours of data (12 readings per hour * 24)
+          .where('Timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('Timestamp', isLessThan: Timestamp.fromDate(endOfDay))
+          .orderBy('Timestamp', descending: false)
           .get();
 
       final List<FlSpot> spots = [];
-      
-      final now = DateTime.now();
-      final startOfDay = DateTime(now.year, now.month, now.day);
 
       for (var doc in querySnapshot.docs) {
         final data = doc.data();
         if (data.containsKey('Glucose') && data.containsKey('Timestamp')) {
           final double glucose = (data['Glucose'] as num).toDouble();
           
-          // Timestamp parsing
           DateTime timestamp;
           if (data['Timestamp'] is Timestamp) {
             timestamp = (data['Timestamp'] as Timestamp).toDate();
           } else if (data['Timestamp'] is String) {
-             timestamp = DateTime.tryParse(data['Timestamp']) ?? now;
+             timestamp = DateTime.tryParse(data['Timestamp']) ?? DateTime.now();
           } else {
             continue;
           }
 
-          // Filter for only today's data to avoid mixing yesterday's late hours with today's early hours
-          // on a fixed 0-24h chart axis.
-          if (timestamp.isBefore(startOfDay)) {
-            continue;
-          }
-
-          // Calculate X value (hours from start of day, or just hours 0-24)
-          // The Chart widget in Chart.dart has minX: 0, maxX: 24.
           final double xValue = timestamp.hour + (timestamp.minute / 60.0);
           
           spots.add(FlSpot(xValue, glucose));
         }
       }
       
-      // Sort spots by X value for the chart to render correctly
       spots.sort((a, b) => a.x.compareTo(b.x));
 
       _glucoseSpots = spots;
