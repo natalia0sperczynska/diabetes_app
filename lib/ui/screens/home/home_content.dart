@@ -5,8 +5,6 @@ import 'package:diabetes_app/services/dexcom_service.dart';
 import '../../view_models/home_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../data/charts/chart.dart';
-import 'package:fl_chart/fl_chart.dart';
 
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
@@ -118,31 +116,8 @@ Time: ${result['time']}
                 style: Theme.of(context).textTheme.bodyLarge,
               ),
             ),
-          const SizedBox(width: 20),
-          SizedBox(
-            height:500,
-            width: 500,
-            child: Chart(title: 'Glucose', glucoseSpots: dummyData)
-          ),
         ],
       ),
     );
   }
 }
-
-final List<FlSpot> dummyData = [
-  const FlSpot(0, 110),
-  const FlSpot(2, 105),
-  const FlSpot(4, 100),
-  const FlSpot(6, 110),
-  const FlSpot(7.5, 160),
-  const FlSpot(9, 140),
-  const FlSpot(11, 100),
-  const FlSpot(12.5, 180),
-  const FlSpot(14, 210),
-  const FlSpot(16, 150),
-  const FlSpot(18, 110),
-  const FlSpot(19.5, 155),
-  const FlSpot(22, 130),
-  const FlSpot(23.9, 115),
-];

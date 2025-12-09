@@ -46,5 +46,5 @@ flutter {
     source = "../.."
 }
 dependencies {
-    implementation 'com.google.mlkit:barcode-scanning:17.2.0'
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
 }
