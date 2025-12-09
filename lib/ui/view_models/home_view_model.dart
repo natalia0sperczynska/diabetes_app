@@ -25,7 +25,7 @@ class HomeViewModel extends ChangeNotifier {
       case 2:
         _currentTitle = "Diet";
         break;
-      case 2:
+      case 3:
         _currentTitle = "Stats";
         break;
     }

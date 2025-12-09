@@ -5,15 +5,23 @@ import 'ui/view_models/meal_view_model.dart';
 import 'package:provider/provider.dart';
 
 import 'ui/view_models/theme_view_model.dart';
+import 'ui/view_models/statistics_view_model.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => MealViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
-        //inne providery
+        ChangeNotifierProvider(create: (_) => StatisticsViewModel()),
       ],
       child: const MyApp(),
     ),
@@ -34,7 +42,7 @@ class MyApp extends StatelessWidget {
       theme: themeViewModel.lightThemeData,
       darkTheme: themeViewModel.darkThemeData,
       debugShowCheckedModeBanner: false,
-      home: IntroductionScreen(),
+      home: const IntroductionScreen(),
       //home: const HomeScreen(),
     );
   }
