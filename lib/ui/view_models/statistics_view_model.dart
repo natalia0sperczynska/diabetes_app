@@ -14,8 +14,7 @@ class StatisticsViewModel extends ChangeNotifier {
   DateTime get selectedDate => _selectedDate;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  // Using the same email as seen in HomeContent
-  final String _userEmail = 'anniefocused@gmail.com'; 
+  final String _userEmail = 'anniefocused@gmail.com';
 
   StatisticsViewModel() : _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day) {
     fetchGlucoseData();
