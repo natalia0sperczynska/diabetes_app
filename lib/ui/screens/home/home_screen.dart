@@ -8,6 +8,7 @@ import '../../widgets/drawer.dart';
 import '../../widgets/bottom_navigation.dart';
 import '../meals/calculator_screen.dart';
 import '../meals/diet_screen.dart';
+import '../health/health_screen.dart';
 import 'home_content.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -27,6 +28,8 @@ class HomeScreen extends StatelessWidget {
           return const DietScreen();
         case 3:
           return const StatsScreen();
+        case 4:
+          return const HealthScreen();
         default:
           return const HomeContent();
       }
@@ -36,7 +39,7 @@ class HomeScreen extends StatelessWidget {
       appBar: AppBar(title: Text(viewModel.currentTitle)),
       drawer: const AppDrawer(),
       body: SafeArea(child: getBody()),
-      bottomNavigationBar: AppBottomNavigationBar(),
+      bottomNavigationBar: const AppBottomNavigationBar(),
     );
   }
 }

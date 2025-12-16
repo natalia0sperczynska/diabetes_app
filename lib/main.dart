@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 
 import 'ui/view_models/theme_view_model.dart';
 import 'ui/view_models/statistics_view_model.dart';
+import 'ui/view_models/health_connect_view_model.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 
@@ -22,6 +23,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MealViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
         ChangeNotifierProvider(create: (_) => StatisticsViewModel()),
+        ChangeNotifierProvider(create: (_) => HealthConnectViewModel()),
       ],
       child: const MyApp(),
     ),

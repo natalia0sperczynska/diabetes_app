@@ -28,6 +28,9 @@ class HomeViewModel extends ChangeNotifier {
       case 3:
         _currentTitle = "Stats";
         break;
+      case 4:
+        _currentTitle = "Health";
+        break;
     }
     notifyListeners();
   }
