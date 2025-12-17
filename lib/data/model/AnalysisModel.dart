@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import 'DailyStats.dart';
+
 class AnalysisStats {
   final double averageGlucose;
   final double gmi;
@@ -47,6 +49,53 @@ class AnalysisStats {
           calculateCoefficientOfVariation(averageGlucose, standardDeviation),
       sensorActivePercent: calculateSensorActivePercent(readings, totalDays),
       ranges: calculateRanges(readings),
+    );
+  }
+  factory AnalysisStats.fromDailyStatsList(List<DailyStats> days) {
+    if (days.isEmpty) return AnalysisStats.empty();
+
+    double sumGlucose = 0;
+    double sumGmi = 0;
+    double sumCV = 0;
+    double sumSD = 0;
+    double sumSensorActive = 0;
+    double sumVeryHigh = 0;
+    double sumHigh = 0;
+    double sumInTarget = 0;
+    double sumLow = 0;
+    double sumVeryLow = 0;
+
+    for (var day in days) {
+      sumGlucose += day.averageGlucose;
+      sumGmi += day.gmi;
+      sumCV += day.coefficientOfVariation;
+      sumSD += day.standardDeviation;
+      sumSensorActive += day.sensorActivePercent;
+
+      sumVeryHigh += day.ranges['veryHigh'] ?? 0;
+      sumHigh += day.ranges['high'] ?? 0;
+      sumInTarget += day.ranges['inTarget'] ?? 0;
+      sumLow += day.ranges['low'] ?? 0;
+      sumVeryLow += day.ranges['veryLow'] ?? 0;
+    }
+
+    int count = days.length;
+
+    double avg(double sum) => double.parse((sum / count).toStringAsFixed(1));
+
+    return AnalysisStats(
+      averageGlucose: double.parse((sumGlucose / count).toStringAsFixed(0)), // glukoza do całości
+      standardDeviation: avg(sumSD),
+      gmi: avg(sumGmi),
+      coefficientOfVariation: avg(sumCV),
+      sensorActivePercent: avg(sumSensorActive),
+      ranges: {
+        'veryHigh': avg(sumVeryHigh),
+        'high': avg(sumHigh),
+        'inTarget': avg(sumInTarget),
+        'low': avg(sumLow),
+        'veryLow': avg(sumVeryLow),
+      },
     );
   }
 
