@@ -34,32 +34,40 @@ class FirebaseService {
           DateTime(lastRawDate.year, lastRawDate.month, lastRawDate.day);
       log("Last measrement ${DateFormat('yyyy-MM-dd').format(anchorDate)}");
 
+      List<Future<DailyStats?>> tasks = [];
+
       for (int i = 0; i < daysCount; i++) {
         DateTime targetDate = anchorDate.subtract(Duration(days: i));
-        String dateId = DateFormat('yyyy-MM-dd').format(targetDate);
-        var aggregateDocRef = _firestore
-            .collection('Glucose_measurements')
-            .doc(_userEmail)
-            .collection(_aggregatesCollection)
-            .doc(dateId);
-
-        var docSnap = await aggregateDocRef.get();
-
-        if (docSnap.exists) {
-          results.add(DailyStats.fromMap(docSnap.data()!));
-        } else {
-          DailyStats? newStats =
-              await _generateAndSaveDailyStats(targetDate, dateId);
-          if (newStats != null) {
-            results.add(newStats);
-          }
-        }
+        tasks.add(_processSingleDay(targetDate));
       }
+      var resultsNullable = await Future.wait(tasks);
+      var finalResults = resultsNullable.whereType<DailyStats>().toList();
+      return finalResults;
     } catch (e) {
       print("Firebase Error: $e");
+      return [];
     }
+  }
 
-    return results;
+  Future<DailyStats?> _processSingleDay(DateTime targetDate) async {
+    String dateId = DateFormat('yyyy-MM-dd').format(targetDate);
+    try {
+      var docRef = _firestore
+          .collection('Glucose_measurements')
+          .doc(_userEmail)
+          .collection(_aggregatesCollection)
+          .doc(dateId);
+
+      var docSnap = await docRef.get();
+
+      if (docSnap.exists) {
+        return DailyStats.fromMap(docSnap.data()!);
+      } else {
+        return await _generateAndSaveDailyStats(targetDate, dateId);
+      }
+    } catch (e) {
+      return null;
+    }
   }
 
   Future<DailyStats?> _generateAndSaveDailyStats(
