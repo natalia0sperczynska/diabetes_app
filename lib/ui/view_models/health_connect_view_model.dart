@@ -1,7 +1,10 @@
+import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart';
 import 'package:health/health.dart';
 
 class HealthConnectViewModel extends ChangeNotifier {
+  final Health _health = Health();
+
   List<HealthDataPoint> _healthDataList = [];
   bool _isAuthorized = false;
   bool _isLoading = false;
@@ -12,81 +15,81 @@ class HealthConnectViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   int get steps => _steps;
 
-  // Configure Health to use Health Connect on Android
-  final Health _health = Health();
+  bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
   HealthConnectViewModel() {
-     _health.configure();
+    _safeConfigure();
+  }
+
+  void _safeConfigure() {
+    if (!_isAndroid) {
+      if (kDebugMode) {
+        print('Health Connect not supported on this platform');
+      }
+      return;
+    }
+
+    _health.configure();
   }
 
   Future<void> authorize() async {
-    // Define the types to get
-    var types = [
+    if (!_isAndroid) return;
+
+    final types = [
       HealthDataType.STEPS,
       HealthDataType.HEART_RATE,
       HealthDataType.BLOOD_GLUCOSE,
     ];
-    
+
     try {
-      // Check if we have permissions
-      // bool hasPermissions = await _health.hasPermissions(types) ?? false;
-      
-      // Request authorization
-      bool requested = await _health.requestAuthorization(types);
-      
+      final requested = await _health.requestAuthorization(types);
+
+      _isAuthorized = requested;
       if (requested) {
-        _isAuthorized = true;
-        fetchData();
-      } else {
-        _isAuthorized = false;
-        if (kDebugMode) {
-           print("Authorization denied");
-        }
+        await fetchData();
       }
-    } catch (e) {
+    } catch (e, st) {
       if (kDebugMode) {
-        print("Exception during authorization: $e");
+        print('Authorization error: $e');
+        print(st);
       }
     }
+
     notifyListeners();
   }
 
   Future<void> fetchData() async {
+    if (!_isAndroid || !_isAuthorized) return;
+
     _isLoading = true;
     notifyListeners();
 
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
 
-    var types = [
+    final types = [
       HealthDataType.STEPS,
       HealthDataType.HEART_RATE,
       HealthDataType.BLOOD_GLUCOSE,
     ];
 
     try {
-      // Fetch data
-      List<HealthDataPoint> healthData = await _health.getHealthDataFromTypes(
+      final healthData = await _health.getHealthDataFromTypes(
         startTime: yesterday,
         endTime: now,
         types: types,
       );
-      
-      // Remove duplicates
+
       _healthDataList = _health.removeDuplicates(healthData);
 
-      // Calculate total steps
-      _steps = 0;
-      
-      // Use getTotalStepsInInterval
-      int? stepsCount = await _health.getTotalStepsInInterval(yesterday, now);
-      if (stepsCount != null) {
-        _steps = stepsCount;
-      }
+      final stepsCount =
+      await _health.getTotalStepsInInterval(yesterday, now);
 
-    } catch (e) {
+      _steps = stepsCount ?? 0;
+    } catch (e, st) {
       if (kDebugMode) {
-        print("Error fetching health data: $e");
+        print('Fetch error: $e');
+        print(st);
       }
     } finally {
       _isLoading = false;
