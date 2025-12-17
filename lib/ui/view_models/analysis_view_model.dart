@@ -30,12 +30,13 @@ class AnalysisViewModel extends ChangeNotifier {
       coefficientOfVariation: 32.5,
       standardDeviation: 45,
       sensorActivePercent: 96,
-
-      timeInTarget: 70,
-      timeHigh: 20,
-      timeVeryHigh: 5,
-      timeLow: 4,
-      timeVeryLow: 1,
+      ranges: {
+        'veryHigh': 0.0,
+        'high': 5.0,
+        'inTarget': 80.0,
+        'low': 10.0,
+        'veryLow': 5.0,
+      },
     );
     //funckja z firebase
 
