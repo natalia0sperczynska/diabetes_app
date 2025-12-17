@@ -17,47 +17,71 @@ class HealthConnectViewModel extends ChangeNotifier {
 
   bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
+  static const bool _devMode = true;
+
   HealthConnectViewModel() {
-    _safeConfigure();
+    _logPlatform();
   }
 
-  void _safeConfigure() {
+  void _logPlatform() {
     if (!_isAndroid) {
-      if (kDebugMode) {
-        print('Health Connect not supported on this platform');
-      }
-      return;
+      debugPrint('Health Connect not supported on this platform');
+    } else if (_devMode) {
+      debugPrint('DEV MODE: Android emulator – skipping HC permissions');
+    } else {
+      debugPrint('Android detected — Health Connect (production mode)');
     }
-
-    _health.configure();
   }
 
+  /// DEV MODE authorization - no permission UI
   Future<void> authorize() async {
     if (!_isAndroid) return;
 
-    final types = [
+    if (_devMode) {
+      // Emulator workaround: assume authorized
+      _isAuthorized = true;
+      debugPrint('DEV MODE: Authorization bypassed');
+      await fetchData();
+      notifyListeners();
+      return;
+    }
+
+    const types = <HealthDataType>[
       HealthDataType.STEPS,
       HealthDataType.HEART_RATE,
       HealthDataType.BLOOD_GLUCOSE,
     ];
 
-    try {
-      final requested = await _health.requestAuthorization(types);
+    const permissions = <HealthDataAccess>[
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+      HealthDataAccess.READ,
+    ];
 
-      _isAuthorized = requested;
-      if (requested) {
+    try {
+      final granted = await _health.hasPermissions(
+        types,
+        permissions: permissions,
+      );
+
+      debugPrint('Health Connect hasPermissions = $granted');
+
+      _isAuthorized = granted == true;
+
+      if (_isAuthorized) {
         await fetchData();
+      } else {
+        debugPrint('Health Connect permissions not granted');
       }
     } catch (e, st) {
-      if (kDebugMode) {
-        print('Authorization error: $e');
-        print(st);
-      }
+      debugPrint('Authorization error: $e');
+      debugPrintStack(stackTrace: st);
     }
 
     notifyListeners();
   }
 
+  /// Fetch health data (last 24h)
   Future<void> fetchData() async {
     if (!_isAndroid || !_isAuthorized) return;
 
@@ -67,7 +91,7 @@ class HealthConnectViewModel extends ChangeNotifier {
     final now = DateTime.now();
     final yesterday = now.subtract(const Duration(days: 1));
 
-    final types = [
+    const types = <HealthDataType>[
       HealthDataType.STEPS,
       HealthDataType.HEART_RATE,
       HealthDataType.BLOOD_GLUCOSE,
@@ -86,11 +110,12 @@ class HealthConnectViewModel extends ChangeNotifier {
       await _health.getTotalStepsInInterval(yesterday, now);
 
       _steps = stepsCount ?? 0;
+
+      debugPrint('Health data points: ${_healthDataList.length}');
+      debugPrint('Steps (last 24h): $_steps');
     } catch (e, st) {
-      if (kDebugMode) {
-        print('Fetch error: $e');
-        print(st);
-      }
+      debugPrint('Fetch error: $e');
+      debugPrintStack(stackTrace: st);
     } finally {
       _isLoading = false;
       notifyListeners();
