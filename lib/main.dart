@@ -2,6 +2,7 @@ import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
 import 'package:flutter/material.dart';
 import 'ui/view_models/home_view_model.dart';
 import 'ui/view_models/meal_view_model.dart';
+import 'ui/view_models/analysis_view_model.dart';
 import 'package:provider/provider.dart';
 
 import 'ui/view_models/theme_view_model.dart';
@@ -24,6 +25,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
         ChangeNotifierProvider(create: (_) => StatisticsViewModel()),
         ChangeNotifierProvider(create: (_) => HealthConnectViewModel()),
+        ChangeNotifierProvider(create: (_) => AnalysisViewModel()),
       ],
       child: const MyApp(),
     ),
