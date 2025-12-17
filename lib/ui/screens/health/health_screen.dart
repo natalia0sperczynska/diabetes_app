@@ -16,6 +16,7 @@ class _HealthScreenState extends State<HealthScreen> {
     final viewModel = context.watch<HealthConnectViewModel>();
 
     return Scaffold(
+      appBar: AppBar(title: const Text("Health Connect")),
       body: SafeArea(
         child: Column(
           children: [

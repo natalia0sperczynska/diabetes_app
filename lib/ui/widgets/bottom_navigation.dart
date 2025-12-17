@@ -21,7 +21,6 @@ class AppBottomNavigationBar extends StatelessWidget {
       Icon(Icons.calculate, color: viewModel.selectedIndex == 1 ? activeColor : inactiveColor),
       Icon(Icons.restaurant_menu, color: viewModel.selectedIndex == 2 ? activeColor : inactiveColor),
       Icon(Icons.stacked_bar_chart, color: viewModel.selectedIndex == 3 ? activeColor : inactiveColor),
-      Icon(Icons.monitor_heart, color: viewModel.selectedIndex == 4 ? activeColor : inactiveColor),
     ];
 
     return CurvedNavigationBar(
