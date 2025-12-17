@@ -45,5 +45,4 @@ app.*.map.json
 /android/app/release
 
 # Firebase
-lib/firebase_options.dart #UNCOMMENTED THIS TO ALLOW EDITING
-
+lib/firebase_options.dart
