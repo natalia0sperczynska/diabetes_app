@@ -1,16 +1,24 @@
 import 'package:diabetes_app/ui/screens/home/home_screen.dart';
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
+import 'package:diabetes_app/ui/screens/auth_wrapper.dart';
 import 'package:diabetes_app/ui/themes/theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 import 'ui/view_models/home_view_model.dart';
+import 'ui/view_models/auth_view_model.dart';
 import 'package:provider/provider.dart';
-import 'ui/screens/intro/intro_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(
       MultiProvider(
           providers: [
             ChangeNotifierProvider(create: (_) => HomeViewModel()),
+            ChangeNotifierProvider(create: (_) => AuthViewModel()),
             //inne providery
           ],
   child: const MyApp(),
