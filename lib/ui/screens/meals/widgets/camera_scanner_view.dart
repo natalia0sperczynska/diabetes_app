@@ -15,27 +15,16 @@ class CameraScannerView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 300,
+    return ClipRect(
       child: Stack(
         fit: StackFit.expand,
         children: [
-          if (initialized &&
-              controller != null &&
-              controller!.value.isInitialized)
-            CameraPreview(controller!)
-          else
-            Container(
-              color: Colors.black12,
-              child: const Center(
-                child: Text('Camera not available'),
-              ),
-            ),
+          _buildCameraPreview(),
 
-          /// overlay
+          /// overlay Viewfinder
           Center(
             child: Container(
-              width: 260,
+              width: 240,
               height: 120,
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.white70, width: 2),
@@ -47,18 +36,18 @@ class CameraScannerView extends StatelessWidget {
                   'Align barcode here',
                   style: TextStyle(
                     color: Colors.white,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
             ),
           ),
 
-          /// scan button
           Positioned(
-            bottom: 16,
-            right: 16,
+            bottom: 12,
+            right: 12,
             child: FloatingActionButton.extended(
+              heroTag: 'scan_btn',
               onPressed: onScan,
               icon: const Icon(Icons.qr_code_scanner),
               label: const Text('Scan'),
@@ -66,6 +55,31 @@ class CameraScannerView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCameraPreview() {
+    if (!initialized ||
+        controller == null ||
+        !controller!.value.isInitialized) {
+      return const ColoredBox(color: Colors.black);
+    }
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SizedBox(
+          width: constraints.maxWidth,
+          height: constraints.maxHeight,
+          child: FittedBox(
+            fit: BoxFit.cover,
+            child: SizedBox(
+              width: controller!.value.previewSize?.height ?? 1,
+              height: controller!.value.previewSize?.width ?? 1,
+              child: CameraPreview(controller!),
+            ),
+          ),
+        );
+      },
     );
   }
 }
