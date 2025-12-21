@@ -20,13 +20,13 @@ class OpenFoodFactsService {
     }
   }
 
-  /// searches for products by name
+  /// searches for products by name, filtering for English, German, or Polish
   static Future<List<Map<String, dynamic>>> searchProducts(String query) async {
     if (query.trim().isEmpty) return [];
 
     try {
       final url = Uri.parse(
-        '$_baseUrl/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=10',
+        '$_baseUrl/cgi/search.pl?search_terms=$query&search_simple=1&action=process&json=1&page_size=100',
       );
 
       final res = await http.get(url);
@@ -35,7 +35,21 @@ class OpenFoodFactsService {
       final data = json.decode(res.body);
       final products = (data['products'] as List?) ?? [];
 
-      return products.cast<Map<String, dynamic>>();
+      final allowedLangs = {'en', 'de', 'pl'};
+
+      return products.cast<Map<String, dynamic>>().where((p) {
+        final lang = p['lang'] as String?;
+        if (lang != null && allowedLangs.contains(lang)) return true;
+
+        final codes = p['languages_codes'];
+        if (codes is Map) {
+          if (codes.keys.any((k) => allowedLangs.contains(k.toString()))) {
+            return true;
+          }
+        }
+
+        return false;
+      }).toList();
     } catch (_) {
       return [];
     }
