@@ -1,8 +1,8 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 import 'models/meal.dart';
+import 'services/open_food_facts_service.dart';
+import 'utils/nutrition_parser.dart';
 import 'widgets/barcode_scanner_dialog.dart';
 import 'widgets/macro_column.dart';
 import 'widgets/meal_details_dialog.dart';
@@ -40,40 +40,15 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   Future<void> _onBarcodeFound(String code) async {
-    final product = await _fetchProductFromOpenFoodFacts(code);
+    final product = await OpenFoodFactsService.fetchProduct(code);
+
     if (product == null) {
       _showSnack('Product not found');
       return;
     }
+
     if (!mounted) return;
     _showAddWithGramsDialog(product);
-  }
-
-  Future<Map<String, dynamic>?> _fetchProductFromOpenFoodFacts(
-      String barcode) async {
-    try {
-      final url = Uri.parse(
-        'https://world.openfoodfacts.org/api/v0/product/$barcode.json',
-      );
-      final res = await http.get(url);
-      if (res.statusCode != 200) return null;
-
-      final data = json.decode(res.body);
-      if (data['status'] != 1) return null;
-
-      return data['product'];
-    } catch (_) {
-      return null;
-    }
-  }
-
-  double _toDoubleSafe(dynamic v) {
-    if (v == null) return 0.0;
-    if (v is num) return v.toDouble();
-    if (v is String) {
-      return double.tryParse(v.replaceAll(',', '.')) ?? 0.0;
-    }
-    return 0.0;
   }
 
   void _showSnack(String msg) {
@@ -113,26 +88,19 @@ class _DietScreenState extends State<DietScreen> {
         final newGrams = result.toInt();
 
         final oldFactor = meal.grams > 0 ? (meal.grams / 100.0) : 1.0;
-
-        final baseKcal = meal.calories / oldFactor;
-        final baseProtein = meal.protein / oldFactor;
-        final baseFat = meal.fat / oldFactor;
-        final baseCarbs = meal.carbs / oldFactor;
-        final baseFiber = meal.fiber / oldFactor;
-        final baseSugars = meal.sugars / oldFactor;
-        final baseSalt = meal.salt / oldFactor;
-
         final newFactor = newGrams / 100.0;
+
+        double scale(double val) => (val / oldFactor) * newFactor;
 
         final newMeal = Meal(
           name: meal.name,
-          calories: (baseKcal * newFactor).round(),
-          protein: baseProtein * newFactor,
-          fat: baseFat * newFactor,
-          carbs: baseCarbs * newFactor,
-          fiber: baseFiber * newFactor,
-          sugars: baseSugars * newFactor,
-          salt: baseSalt * newFactor,
+          calories: scale(meal.calories.toDouble()).round(),
+          protein: scale(meal.protein),
+          fat: scale(meal.fat),
+          carbs: scale(meal.carbs),
+          fiber: scale(meal.fiber),
+          sugars: scale(meal.sugars),
+          salt: scale(meal.salt),
           grams: newGrams,
         );
 
@@ -158,13 +126,13 @@ class _DietScreenState extends State<DietScreen> {
         product['generic_name'] ??
         'Unknown product';
 
-    final kcal100 = _toDoubleSafe(nutriments['energy-kcal_100g']);
-    final protein100 = _toDoubleSafe(nutriments['proteins_100g']);
-    final fat100 = _toDoubleSafe(nutriments['fat_100g']);
-    final carbs100 = _toDoubleSafe(nutriments['carbohydrates_100g']);
-    final fiber100 = _toDoubleSafe(nutriments['fiber_100g']);
-    final sugars100 = _toDoubleSafe(nutriments['sugars_100g']);
-    final salt100 = _toDoubleSafe(nutriments['salt_100g']);
+    final kcal100 = toDoubleSafe(nutriments['energy-kcal_100g']);
+    final protein100 = toDoubleSafe(nutriments['proteins_100g']);
+    final fat100 = toDoubleSafe(nutriments['fat_100g']);
+    final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
+    final fiber100 = toDoubleSafe(nutriments['fiber_100g']);
+    final sugars100 = toDoubleSafe(nutriments['sugars_100g']);
+    final salt100 = toDoubleSafe(nutriments['salt_100g']);
 
     final factor = grams / 100.0;
 
