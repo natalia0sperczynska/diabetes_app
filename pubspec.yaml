@@ -27,10 +27,6 @@ dependencies:
   smooth_page_indicator: ^1.2.1
   flutter_launcher_icons: ^0.14.4
   
-  # Upgrading back to latest stable versions now that configuration is fixed
-  firebase_core: ^3.6.0
-  cloud_firestore: ^5.4.0
-  
   http: ^1.2.1
   camera: ^0.11.3
   google_mlkit_barcode_scanning: ^0.12.0

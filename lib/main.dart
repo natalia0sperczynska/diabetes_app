@@ -1,5 +1,4 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
-import 'package:diabetes_app/ui/themes/theme/app_theme.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
@@ -11,8 +10,7 @@ import 'package:provider/provider.dart';
 import 'ui/view_models/theme_view_model.dart';
 import 'ui/view_models/statistics_view_model.dart';
 import 'ui/view_models/health_connect_view_model.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
+import 'ui/view_models/auth_view_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,6 +21,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthViewModel()),
         ChangeNotifierProvider(create: (_) => HomeViewModel()),
         ChangeNotifierProvider(create: (_) => MealViewModel()),
         ChangeNotifierProvider(create: (_) => ThemeViewModel()),
