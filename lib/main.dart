@@ -1,5 +1,8 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
+import 'package:diabetes_app/ui/themes/theme/app_theme.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'firebase_options.dart';
 import 'ui/view_models/home_view_model.dart';
 import 'ui/view_models/meal_view_model.dart';
 import 'ui/view_models/analysis_view_model.dart';

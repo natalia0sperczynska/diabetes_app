@@ -5,6 +5,7 @@ import '../screens/health/health_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../view_models/home_view_model.dart';
+import '../view_models/auth_view_model.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -96,6 +97,18 @@ class AppDrawer extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (context) => const ProfileScreen()),
               );
+            },
+          ),
+          const Divider(),
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            onTap: () async {
+              final authViewModel = context.read<AuthViewModel>();
+              await authViewModel.signOut();
+              if (context.mounted) {
+                Navigator.pop(context);
+              }
             },
           ),
         ],

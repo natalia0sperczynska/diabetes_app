@@ -1,5 +1,3 @@
-import 'package:diabetes_app/ui/screens/profile/profile_screen.dart';
-import 'package:diabetes_app/ui/screens/settings/settings_screen.dart';
 import 'package:diabetes_app/ui/screens/statistics/statistics_screen.dart';
 import 'package:flutter/material.dart' hide BottomNavigationBar;
 import 'package:provider/provider.dart';
