@@ -11,7 +11,7 @@ final List<Widget> pages = [
   IntroComponent(
     title: "TRACK YOUR MEALS",
     description:
-    "Log down your carbohydrates and see how they affect your health.",
+        "Log down your carbohydrates and see how they affect your health.",
     image: AppAssets.logo,
   ),
   IntroComponent(

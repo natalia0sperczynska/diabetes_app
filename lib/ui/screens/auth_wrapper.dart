@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/auth_view_model.dart';
+import '../themes/colors/app_colors.dart';
 import 'auth/login_screen.dart';
 import 'home/home_screen.dart';
 
@@ -11,20 +12,51 @@ class AuthWrapper extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthViewModel>(
       builder: (context, authViewModel, child) {
-        if (authViewModel.status == AuthStatus.initial ||
-            authViewModel.status == AuthStatus.loading) {
-          return const Scaffold(
+        if (authViewModel.status == AuthStatus.loading ||
+            authViewModel.status == AuthStatus.initial) {
+          return Scaffold(
+            backgroundColor: AppColors.darkBlue2,
             body: Center(
-              child: CircularProgressIndicator(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // Logo
+                  Image.asset(
+                    'assets/images/diabetes_logo_placeholder.png',
+                    width: 150,
+                    height: 150,
+                  ),
+                  const SizedBox(height: 40),
+
+                  // Loading indicator
+                  const CircularProgressIndicator(
+                    color: AppColors.mainBlue,
+                    strokeWidth: 3,
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Loading text
+                  const Text(
+                    'Loading...',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         }
 
-        if (authViewModel.isAuthenticated) {
+        // Show home if authenticated
+        if (authViewModel.status == AuthStatus.authenticated) {
           return const HomeScreen();
-        } else {
-          return const LoginScreen();
         }
+
+        // Show login for unauthenticated or error
+        return const LoginScreen();
       },
     );
   }

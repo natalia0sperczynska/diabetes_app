@@ -85,26 +85,22 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.favorite,
-                    size: 80,
-                    color: AppColors.mainBlue,
-                  ),
+                  Icon(Icons.favorite, size: 80, color: AppColors.mainBlue),
                   const SizedBox(height: 16),
                   Text(
                     'Diabetes App',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                          color: AppColors.mainBlue,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      color: AppColors.mainBlue,
+                      fontWeight: FontWeight.bold,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     'Sign in to your account',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: Colors.white70,
-                        ),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyLarge?.copyWith(color: Colors.white70),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
@@ -116,7 +112,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       labelText: 'Email',
                       labelStyle: const TextStyle(color: Colors.white70),
-                      prefixIcon: const Icon(Icons.email_outlined, color: AppColors.mainBlue),
+                      prefixIcon: const Icon(
+                        Icons.email_outlined,
+                        color: AppColors.mainBlue,
+                      ),
                       filled: true,
                       fillColor: AppColors.darkBlue1,
                       border: OutlineInputBorder(
@@ -125,14 +124,19 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.mainBlue, width: 2),
+                        borderSide: const BorderSide(
+                          color: AppColors.mainBlue,
+                          width: 2,
+                        ),
                       ),
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Enter email address';
                       }
-                      if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+                      if (!RegExp(
+                        r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                      ).hasMatch(value)) {
                         return 'Enter a valid email address';
                       }
                       return null;
@@ -147,10 +151,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       labelText: 'Password',
                       labelStyle: const TextStyle(color: Colors.white70),
-                      prefixIcon: const Icon(Icons.lock_outlined, color: AppColors.mainBlue),
+                      prefixIcon: const Icon(
+                        Icons.lock_outlined,
+                        color: AppColors.mainBlue,
+                      ),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                           color: Colors.white70,
                         ),
                         onPressed: () {
@@ -167,7 +176,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: AppColors.mainBlue, width: 2),
+                        borderSide: const BorderSide(
+                          color: AppColors.mainBlue,
+                          width: 2,
+                        ),
                       ),
                     ),
                     validator: (value) {
@@ -194,7 +206,9 @@ class _LoginScreenState extends State<LoginScreen> {
                   Consumer<AuthViewModel>(
                     builder: (context, authViewModel, child) {
                       return ElevatedButton(
-                        onPressed: authViewModel.isLoading ? null : _handleLogin,
+                        onPressed: authViewModel.isLoading
+                            ? null
+                            : _handleLogin,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.mainBlue,
                           foregroundColor: Colors.white,
@@ -202,7 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          disabledBackgroundColor: AppColors.mainBlue.withOpacity(0.5),
+                          disabledBackgroundColor: AppColors.mainBlue
+                              .withOpacity(0.5),
                         ),
                         child: authViewModel.isLoading
                             ? const SizedBox(

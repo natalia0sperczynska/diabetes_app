@@ -2,7 +2,7 @@ import 'package:diabetes_app/ui/screens/intro/intro_data.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../themes/colors/app_colors.dart';
-import '../home/home_screen.dart';
+import '../auth_wrapper.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
 class IntroductionScreen extends StatefulWidget {
@@ -35,7 +35,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   void _onFinish() {
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => HomeScreen()),
+      MaterialPageRoute(builder: (context) => const AuthWrapper()),
     );
   }
 

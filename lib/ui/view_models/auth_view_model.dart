@@ -1,19 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import '../services/auth_service.dart';
+import '../../services/auth_service.dart';
+import '../../services/user_service.dart';
+import '../../models/user_model.dart';
 
-enum AuthStatus {
-  initial,
-  loading,
-  authenticated,
-  unauthenticated,
-  error,
-}
+enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
 
 class AuthViewModel extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
 
-  AuthStatus _status = AuthStatus.initial;
+  AuthStatus _status = AuthStatus.loading;
   User? _user;
   String? _errorMessage;
 
@@ -28,8 +25,14 @@ class AuthViewModel extends ChangeNotifier {
     _init();
   }
 
-  void _init() {
-    _authService.authStateChanges.listen((User? user) {
+  void _init() async {
+    // Add a minimum splash screen duration
+    final splashDuration = Future.delayed(const Duration(milliseconds: 800));
+
+    _authService.authStateChanges.listen((User? user) async {
+      // Wait for minimum splash duration
+      await splashDuration;
+
       _user = user;
       if (user != null) {
         _status = AuthStatus.authenticated;
@@ -40,10 +43,7 @@ class AuthViewModel extends ChangeNotifier {
     });
   }
 
-  Future<bool> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<bool> signIn({required String email, required String password}) async {
     try {
       _status = AuthStatus.loading;
       _errorMessage = null;
@@ -73,21 +73,37 @@ class AuthViewModel extends ChangeNotifier {
   Future<bool> register({
     required String email,
     required String password,
-    String? displayName,
+    required String name,
+    required String surname,
+    required int age,
+    required String gender,
+    required String country,
+    String? phoneNumber,
   }) async {
     try {
       _status = AuthStatus.loading;
       _errorMessage = null;
       notifyListeners();
 
-      await _authService.registerWithEmailAndPassword(
+      final userCredential = await _authService.registerWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      if (displayName != null && displayName.isNotEmpty) {
-        await _authService.updateDisplayName(displayName);
-      }
+      final userId = userCredential.user!.uid;
+
+      final userModel = UserModel(
+        id: userId,
+        email: email,
+        name: name,
+        surname: surname,
+        age: age,
+        gender: gender,
+        country: country,
+        phoneNumber: phoneNumber,
+      );
+
+      await _userService.createUser(userModel);
 
       _status = AuthStatus.authenticated;
       notifyListeners();
