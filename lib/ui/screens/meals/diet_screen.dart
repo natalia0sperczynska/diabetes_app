@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'models/meal.dart';
 import 'widgets/barcode_scanner_dialog.dart';
 import 'widgets/macro_column.dart';
+import 'widgets/meal_details_dialog.dart';
 import 'product_details_screen.dart';
 
 class DietScreen extends StatefulWidget {
@@ -44,10 +45,12 @@ class _DietScreenState extends State<DietScreen> {
       _showSnack('Product not found');
       return;
     }
+    if (!mounted) return;
     _showAddWithGramsDialog(product);
   }
 
-  Future<Map<String, dynamic>?> _fetchProductFromOpenFoodFacts(String barcode) async {
+  Future<Map<String, dynamic>?> _fetchProductFromOpenFoodFacts(
+      String barcode) async {
     try {
       final url = Uri.parse(
         'https://world.openfoodfacts.org/api/v0/product/$barcode.json',
@@ -74,8 +77,7 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   void _showSnack(String msg) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(msg)));
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
   }
 
   void _addMealToTotals(Meal meal) {
@@ -107,8 +109,8 @@ class _DietScreenState extends State<DietScreen> {
         _removeMealFromTotals(meal);
         meals.removeAt(index);
         _showSnack('Meal removed');
-      } else if (result is int) {
-        final newGrams = result;
+      } else if (result is num) {
+        final newGrams = result.toInt();
 
         final oldFactor = meal.grams > 0 ? (meal.grams / 100.0) : 1.0;
 
@@ -143,10 +145,15 @@ class _DietScreenState extends State<DietScreen> {
     });
   }
 
-  void _showAddWithGramsDialog(Map<String, dynamic> product) {
-    final nutriments =
-        (product['nutriments'] as Map<String, dynamic>?) ?? {};
+  Future<void> _showAddWithGramsDialog(Map<String, dynamic> product) async {
+    final grams = await showDialog<double>(
+      context: context,
+      builder: (_) => AddProductDialog(product: product),
+    );
 
+    if (grams == null || grams <= 0) return;
+
+    final nutriments = (product['nutriments'] as Map<String, dynamic>?) ?? {};
     final name = product['product_name'] ??
         product['generic_name'] ??
         'Unknown product';
@@ -159,77 +166,24 @@ class _DietScreenState extends State<DietScreen> {
     final sugars100 = _toDoubleSafe(nutriments['sugars_100g']);
     final salt100 = _toDoubleSafe(nutriments['salt_100g']);
 
-    final gramsCtrl = TextEditingController(text: '100');
+    final factor = grams / 100.0;
 
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: Text('Add "$name"'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: gramsCtrl,
-              keyboardType:
-              const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(
-                labelText: 'Grams',
-                prefixIcon: Icon(Icons.scale),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        ProductDetailsScreen(product: product),
-                  ),
-                );
-              },
-              child: const Text('View full nutrition info'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              final grams =
-                  double.tryParse(gramsCtrl.text.replaceAll(',', '.')) ?? 0;
-              if (grams <= 0) return;
-
-              final factor = grams / 100.0;
-
-              final newMeal = Meal(
-                name: name,
-                calories: (kcal100 * factor).round(),
-                protein: protein100 * factor,
-                fat: fat100 * factor,
-                carbs: carbs100 * factor,
-                fiber: fiber100 * factor,
-                sugars: sugars100 * factor,
-                salt: salt100 * factor,
-                grams: grams.round(),
-              );
-
-              setState(() {
-                _addMealToTotals(newMeal);
-                meals.add(newMeal);
-              });
-
-              Navigator.pop(context);
-            },
-            child: const Text('Add'),
-          ),
-        ],
-      ),
+    final newMeal = Meal(
+      name: name,
+      calories: (kcal100 * factor).round(),
+      protein: protein100 * factor,
+      fat: fat100 * factor,
+      carbs: carbs100 * factor,
+      fiber: fiber100 * factor,
+      sugars: sugars100 * factor,
+      salt: salt100 * factor,
+      grams: grams.round(),
     );
+
+    setState(() {
+      _addMealToTotals(newMeal);
+      meals.add(newMeal);
+    });
   }
 
   @override
@@ -257,9 +211,7 @@ class _DietScreenState extends State<DietScreen> {
                   children: [
                     Text(
                       'Remaining: $remaining kcal',
-                      style: Theme.of(context)
-                          .textTheme
-                          .titleLarge,
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 12),
                     Row(
@@ -270,9 +222,7 @@ class _DietScreenState extends State<DietScreen> {
                             consumed: proteinConsumed,
                             goal: proteinGoal),
                         MacroColumn(
-                            label: 'Fat',
-                            consumed: fatConsumed,
-                            goal: fatGoal),
+                            label: 'Fat', consumed: fatConsumed, goal: fatGoal),
                         MacroColumn(
                             label: 'Carbs',
                             consumed: carbConsumed,
@@ -291,7 +241,6 @@ class _DietScreenState extends State<DietScreen> {
               itemCount: meals.length,
               separatorBuilder: (_, __) => const Divider(),
               itemBuilder: (_, i) {
-                // invert index to show newest at top, but keep correct index for logic
                 final index = meals.length - 1 - i;
                 final meal = meals[index];
 
@@ -300,7 +249,7 @@ class _DietScreenState extends State<DietScreen> {
                   title: Text(meal.name),
                   subtitle: Text('${meal.grams} g'),
                   trailing: Text('${meal.calories} kcal'),
-                  onTap: () => _onMealTap(index), // Enable click
+                  onTap: () => _onMealTap(index),
                 );
               },
             ),
@@ -311,41 +260,18 @@ class _DietScreenState extends State<DietScreen> {
   }
 }
 
-class MealDetailsDialog extends StatefulWidget {
-  final Meal meal;
+class AddProductDialog extends StatefulWidget {
+  final Map<String, dynamic> product;
 
-  const MealDetailsDialog({required this.meal, super.key});
+  const AddProductDialog({required this.product, super.key});
 
   @override
-  State<MealDetailsDialog> createState() => _MealDetailsDialogState();
+  State<AddProductDialog> createState() => _AddProductDialogState();
 }
 
-class _MealDetailsDialogState extends State<MealDetailsDialog> {
-  late TextEditingController _gramsController;
-
-  late double _baseKcal;
-  late double _baseProtein;
-  late double _baseFat;
-  late double _baseCarbs;
-  late double _baseFiber;
-  late double _baseSugars;
-  late double _baseSalt;
-
-  @override
-  void initState() {
-    super.initState();
-    _gramsController = TextEditingController(text: widget.meal.grams.toString());
-
-    final factor = widget.meal.grams > 0 ? (widget.meal.grams / 100.0) : 1.0;
-
-    _baseKcal = widget.meal.calories / factor;
-    _baseProtein = widget.meal.protein / factor;
-    _baseFat = widget.meal.fat / factor;
-    _baseCarbs = widget.meal.carbs / factor;
-    _baseFiber = widget.meal.fiber / factor;
-    _baseSugars = widget.meal.sugars / factor;
-    _baseSalt = widget.meal.salt / factor;
-  }
+class _AddProductDialogState extends State<AddProductDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _gramsController = TextEditingController(text: '100');
 
   @override
   void dispose() {
@@ -353,72 +279,65 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
     super.dispose();
   }
 
-  Widget _buildRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final currentGrams = int.tryParse(_gramsController.text) ?? 0;
-    final factor = currentGrams / 100.0;
+    final name = widget.product['product_name'] ??
+        widget.product['generic_name'] ??
+        'Unknown product';
 
     return AlertDialog(
-      title: Text(widget.meal.name),
-      content: SingleChildScrollView(
+      title: Text('Add "$name"'),
+      content: Form(
+        key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
+            TextFormField(
               controller: _gramsController,
-              keyboardType: TextInputType.number,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
               decoration: const InputDecoration(
                 labelText: 'Grams',
-                suffixText: 'g',
-                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.scale),
+                hintText: '100',
               ),
-              onChanged: (_) => setState(() {}),
+              validator: (value) {
+                if (value == null || value.isEmpty) return 'Enter grams';
+                final n = double.tryParse(value.replaceAll(',', '.'));
+                if (n == null) return 'Invalid number';
+                if (n <= 0) return 'Must be positive';
+                return null;
+              },
             ),
-            const SizedBox(height: 20),
-            const Text('Nutritional Values:', style: TextStyle(fontWeight: FontWeight.bold)),
-            const Divider(),
-            _buildRow('Calories', '${(_baseKcal * factor).round()} kcal'),
-            _buildRow('Protein', '${(_baseProtein * factor).toStringAsFixed(1)} g'),
-            _buildRow('Fat', '${(_baseFat * factor).toStringAsFixed(1)} g'),
-            _buildRow('Carbs', '${(_baseCarbs * factor).toStringAsFixed(1)} g'),
-            _buildRow('Fiber', '${(_baseFiber * factor).toStringAsFixed(1)} g'),
-            _buildRow('Sugars', '${(_baseSugars * factor).toStringAsFixed(1)} g'),
-            _buildRow('Salt', '${(_baseSalt * factor).toStringAsFixed(1)} g'),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        ProductDetailsScreen(product: widget.product),
+                  ),
+                );
+              },
+              child: const Text('View full nutrition info'),
+            ),
           ],
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context, 'delete'),
-          style: TextButton.styleFrom(foregroundColor: Colors.red),
-          child: const Text('Delete'),
-        ),
         TextButton(
           onPressed: () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
         ElevatedButton(
           onPressed: () {
-            final newGrams = int.tryParse(_gramsController.text);
-            if (newGrams != null && newGrams > 0) {
-              Navigator.pop(context, newGrams);
+            if (_formKey.currentState!.validate()) {
+              final grams =
+              double.parse(_gramsController.text.replaceAll(',', '.'));
+              Navigator.pop(context, grams);
             }
           },
-          child: const Text('Save'),
+          child: const Text('Add'),
         ),
       ],
     );

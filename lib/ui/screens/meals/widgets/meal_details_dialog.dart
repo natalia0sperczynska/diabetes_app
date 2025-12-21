@@ -11,6 +11,7 @@ class MealDetailsDialog extends StatefulWidget {
 }
 
 class _MealDetailsDialogState extends State<MealDetailsDialog> {
+  final _formKey = GlobalKey<FormState>();
   late TextEditingController _gramsController;
 
   late double _baseKcal;
@@ -56,40 +57,61 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
     );
   }
 
+  String? _validateGrams(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter an amount';
+    }
+    final normalized = value.replaceAll(',', '.');
+    final number = double.tryParse(normalized);
+    if (number == null) {
+      return 'Invalid number';
+    }
+    if (number <= 0) {
+      return 'Must be positive';
+    }
+    return null;
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Calculate preview values based on current text input
-    final currentGrams = int.tryParse(_gramsController.text) ?? 0;
+    final currentText = _gramsController.text.replaceAll(',', '.');
+    final currentGrams = double.tryParse(currentText) ?? 0;
     final factor = currentGrams / 100.0;
 
     return AlertDialog(
       title: Text(widget.meal.name),
       content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: _gramsController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Grams',
-                suffixText: 'g',
-                border: OutlineInputBorder(),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              TextFormField(
+                controller: _gramsController,
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                validator: _validateGrams,
+                decoration: const InputDecoration(
+                  labelText: 'Grams',
+                  suffixText: 'g',
+                  border: OutlineInputBorder(),
+                  hintText: 'e.g. 100',
+                ),
+                onChanged: (_) => setState(() {}),
               ),
-              onChanged: (_) => setState(() {}),
-            ),
-            const SizedBox(height: 20),
-            const Text('Nutritional Values:', style: TextStyle(fontWeight: FontWeight.bold)),
-            const Divider(),
-            _buildRow('Calories', '${(_baseKcal * factor).round()} kcal'),
-            _buildRow('Protein', '${(_baseProtein * factor).toStringAsFixed(1)} g'),
-            _buildRow('Fat', '${(_baseFat * factor).toStringAsFixed(1)} g'),
-            _buildRow('Carbs', '${(_baseCarbs * factor).toStringAsFixed(1)} g'),
-            _buildRow('Fiber', '${(_baseFiber * factor).toStringAsFixed(1)} g'),
-            _buildRow('Sugars', '${(_baseSugars * factor).toStringAsFixed(1)} g'),
-            _buildRow('Salt', '${(_baseSalt * factor).toStringAsFixed(1)} g'),
-          ],
+              const SizedBox(height: 20),
+              const Text('Nutritional Values:',
+                  style: TextStyle(fontWeight: FontWeight.bold)),
+              const Divider(),
+              _buildRow('Calories', '${(_baseKcal * factor).round()} kcal'),
+              _buildRow('Protein', '${(_baseProtein * factor).toStringAsFixed(1)} g'),
+              _buildRow('Fat', '${(_baseFat * factor).toStringAsFixed(1)} g'),
+              _buildRow('Carbs', '${(_baseCarbs * factor).toStringAsFixed(1)} g'),
+              _buildRow('Fiber', '${(_baseFiber * factor).toStringAsFixed(1)} g'),
+              _buildRow('Sugars', '${(_baseSugars * factor).toStringAsFixed(1)} g'),
+              _buildRow('Salt', '${(_baseSalt * factor).toStringAsFixed(1)} g'),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -106,8 +128,9 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
         ),
         ElevatedButton(
           onPressed: () {
-            final newGrams = int.tryParse(_gramsController.text);
-            if (newGrams != null && newGrams > 0) {
+            if (_formKey.currentState!.validate()) {
+              final text = _gramsController.text.replaceAll(',', '.');
+              final newGrams = int.tryParse(text) ?? double.parse(text).round();
               Navigator.pop(context, newGrams);
             }
           },
