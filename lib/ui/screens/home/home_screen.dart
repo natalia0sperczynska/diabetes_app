@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../view_models/home_view_model.dart';
 import '../../widgets/drawer.dart';
 import '../../widgets/bottom_navigation.dart';
-import '../meals/meal_screen.dart';
+import '../meals/calculator_screen.dart';
+import '../meals/diet_screen.dart';
+import '../health/health_screen.dart';
 import 'home_content.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -19,9 +21,13 @@ class HomeScreen extends StatelessWidget {
         case 0:
           return const HomeContent();
         case 1:
-          return const MealScreen();
+          return const CalculatorScreen();
         case 2:
+          return const DietScreen();
+        case 3:
           return const StatsScreen();
+        case 4:
+          return const HealthScreen();
         default:
           return const HomeContent();
       }

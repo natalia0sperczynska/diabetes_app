@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../screens/analysis/analysis_screen.dart';
+import '../screens/health/health_screen.dart';
 import '../screens/profile/profile_screen.dart';
 import '../screens/settings/settings_screen.dart';
 import '../view_models/home_view_model.dart';
@@ -15,9 +17,9 @@ class AppDrawer extends StatelessWidget {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Colors.blue),
-            child: Text(
+          DrawerHeader(
+            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+            child: const Text(
               'Menu',
               style: TextStyle(color: Colors.white, fontSize: 24),
             ),
@@ -47,6 +49,30 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               context.read<HomeViewModel>().setIndex(2);
               Navigator.pop(context);
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.monitor_heart),
+            title: const Text('Health Connect'),
+            selected: false,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const HealthScreen()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.analytics_outlined),
+            title: const Text('Analysis'),
+            selected: false,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const AnalysisScreen()),
+              );
             },
           ),
           ListTile(

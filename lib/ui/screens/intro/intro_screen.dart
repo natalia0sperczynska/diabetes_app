@@ -15,7 +15,13 @@ class IntroductionScreen extends StatefulWidget {
 class _IntroductionScreenState extends State<IntroductionScreen> {
   final PageController _pageController = PageController();
   int _currentIndex = 0;
-  final _pages = pages;
+  late final List<Widget> _pages;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _pages = getPagesWithContext(context);
+  }
 
   void _skip() {
     _onFinish();
