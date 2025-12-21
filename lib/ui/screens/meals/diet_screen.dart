@@ -2,11 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import 'models/meal.dart';
-import 'services/open_food_facts_service.dart';
-import 'utils/nutrition_parser.dart';
-import 'widgets/barcode_scanner_dialog.dart';
 import 'widgets/meal_details_dialog.dart';
-import 'product_details_screen.dart';
+import 'food_search_screen.dart';
 
 class DietScreen extends StatefulWidget {
   const DietScreen({super.key});
@@ -71,25 +68,21 @@ class _DietScreenState extends State<DietScreen> {
       .expand((l) => l)
       .fold(0.0, (sum, meal) => sum + meal.carbs);
 
-  Future<void> _openBarcodeScanner() async {
-    final barcode = await showDialog<String>(
-      context: context,
-      builder: (_) => const BarcodeScannerDialog(),
+
+  Future<void> _onAddMealTap(String sectionKey) async {
+    final Meal? newMeal = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FoodSearchScreen(mealType: sectionKey),
+      ),
     );
 
-    if (barcode != null) {
-      _onBarcodeFound(barcode);
+    if (newMeal != null) {
+      setState(() {
+        dailyMeals[sectionKey]?.add(newMeal);
+      });
+      _showSnack('${newMeal.name} added to $sectionKey');
     }
-  }
-
-  Future<void> _onBarcodeFound(String code) async {
-    final product = await OpenFoodFactsService.fetchProduct(code);
-    if (product == null) {
-      _showSnack('Product not found');
-      return;
-    }
-    if (!mounted) return;
-    _showAddDialog(product);
   }
 
   void _showSnack(String msg) {
@@ -135,49 +128,6 @@ class _DietScreenState extends State<DietScreen> {
     });
   }
 
-  Future<void> _showAddDialog(Map<String, dynamic> product) async {
-    final result = await showDialog<AddMealResult>(
-      context: context,
-      builder: (_) => AddProductDialog(product: product),
-    );
-
-    if (result == null) return;
-
-    final grams = result.grams;
-    final section = result.mealType;
-
-    final nutriments = (product['nutriments'] as Map<String, dynamic>?) ?? {};
-    final name = product['product_name'] ??
-        product['generic_name'] ??
-        'Unknown product';
-
-    final kcal100 = toDoubleSafe(nutriments['energy-kcal_100g']);
-    final protein100 = toDoubleSafe(nutriments['proteins_100g']);
-    final fat100 = toDoubleSafe(nutriments['fat_100g']);
-    final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
-    final fiber100 = toDoubleSafe(nutriments['fiber_100g']);
-    final sugars100 = toDoubleSafe(nutriments['sugars_100g']);
-    final salt100 = toDoubleSafe(nutriments['salt_100g']);
-
-    final factor = grams / 100.0;
-
-    final newMeal = Meal(
-      name: name,
-      calories: (kcal100 * factor).round(),
-      protein: protein100 * factor,
-      fat: fat100 * factor,
-      carbs: carbs100 * factor,
-      fiber: fiber100 * factor,
-      sugars: sugars100 * factor,
-      salt: salt100 * factor,
-      grams: grams.round(),
-    );
-
-    setState(() {
-      dailyMeals[section]?.add(newMeal);
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
     final remaining = dailyCalorieGoal - caloriesConsumed;
@@ -213,18 +163,13 @@ class _DietScreenState extends State<DietScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _openBarcodeScanner,
-        backgroundColor: primaryBlue,
-        child: const Icon(Icons.qr_code_scanner, color: Colors.white),
-      ),
       body: SingleChildScrollView(
         child: Column(
           children: [
             _buildSummaryCard(remaining),
             const SizedBox(height: 16),
             ...dailyMeals.keys.map((key) => _buildMealSection(key)),
-            const SizedBox(height: 80),
+            const SizedBox(height: 40),
           ],
         ),
       ),
@@ -399,23 +344,40 @@ class _DietScreenState extends State<DietScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                sectionKey,
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: primaryBlue,
-                ),
+              Row(
+                children: [
+                  Text(
+                    sectionKey,
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: primaryBlue,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    '$sectionCalories kcal',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                        fontSize: 14
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '$sectionCalories kcal',
-                style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _onAddMealTap(sectionKey),
+                  child: Padding(
+                    padding: const EdgeInsets.all(6.0),
+                    child: Icon(Icons.add_circle, color: primaryBlue, size: 28),
+                  ),
                 ),
               ),
             ],
@@ -425,8 +387,8 @@ class _DietScreenState extends State<DietScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Text(
-              'No food logged',
-              style: TextStyle(color: primaryBlue.withOpacity(0.4), fontSize: 12),
+              'Add food',
+              style: TextStyle(color: primaryBlue.withOpacity(0.4), fontSize: 13, fontStyle: FontStyle.italic),
             ),
           )
         else
@@ -485,127 +447,6 @@ class _DietScreenState extends State<DietScreen> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class AddMealResult {
-  final double grams;
-  final String mealType;
-  AddMealResult(this.grams, this.mealType);
-}
-
-class AddProductDialog extends StatefulWidget {
-  final Map<String, dynamic> product;
-
-  const AddProductDialog({required this.product, super.key});
-
-  @override
-  State<AddProductDialog> createState() => _AddProductDialogState();
-}
-
-class _AddProductDialogState extends State<AddProductDialog> {
-  final _formKey = GlobalKey<FormState>();
-  final _gramsController = TextEditingController(text: '100');
-
-  String _selectedType = 'Breakfast';
-  final List<String> _mealTypes = ['Breakfast', 'Lunch', 'Dinner', 'Snacks'];
-
-  @override
-  void dispose() {
-    _gramsController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final name = widget.product['product_name'] ??
-        widget.product['generic_name'] ??
-        'Unknown product';
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text('Add "$name"', style: const TextStyle(fontSize: 18)),
-      content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _gramsController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                decoration: InputDecoration(
-                  labelText: 'Grams',
-                  prefixIcon: const Icon(Icons.scale),
-                  hintText: '100',
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) return 'Enter grams';
-                  final n = double.tryParse(value.replaceAll(',', '.'));
-                  if (n == null) return 'Invalid number';
-                  if (n <= 0) return 'Must be positive';
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              const Text('Meal Type', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              DropdownButtonFormField<String>(
-                value: _selectedType,
-                decoration: InputDecoration(
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                items: _mealTypes.map((type) {
-                  return DropdownMenuItem(value: type, child: Text(type));
-                }).toList(),
-                onChanged: (val) {
-                  if (val != null) setState(() => _selectedType = val);
-                },
-              ),
-              const SizedBox(height: 12),
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            ProductDetailsScreen(product: widget.product),
-                      ),
-                    );
-                  },
-                  child: const Text('View full nutrition info'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              final grams =
-              double.parse(_gramsController.text.replaceAll(',', '.'));
-              Navigator.pop(context, AddMealResult(grams, _selectedType));
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            backgroundColor: const Color(0xFF1565C0),
-            foregroundColor: Colors.white,
-          ),
-          child: const Text('Add'),
-        ),
-      ],
     );
   }
 }
