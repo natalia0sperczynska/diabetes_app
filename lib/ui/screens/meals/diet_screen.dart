@@ -78,6 +78,71 @@ class _DietScreenState extends State<DietScreen> {
         .showSnackBar(SnackBar(content: Text(msg)));
   }
 
+  void _addMealToTotals(Meal meal) {
+    caloriesConsumed += meal.calories;
+    proteinConsumed += meal.protein;
+    fatConsumed += meal.fat;
+    carbConsumed += meal.carbs;
+  }
+
+  void _removeMealFromTotals(Meal meal) {
+    caloriesConsumed -= meal.calories;
+    proteinConsumed -= meal.protein;
+    fatConsumed -= meal.fat;
+    carbConsumed -= meal.carbs;
+  }
+
+  Future<void> _onMealTap(int index) async {
+    final meal = meals[index];
+
+    final result = await showDialog(
+      context: context,
+      builder: (_) => MealDetailsDialog(meal: meal),
+    );
+
+    if (result == null) return;
+
+    setState(() {
+      if (result == 'delete') {
+        _removeMealFromTotals(meal);
+        meals.removeAt(index);
+        _showSnack('Meal removed');
+      } else if (result is int) {
+        final newGrams = result;
+
+        final oldFactor = meal.grams > 0 ? (meal.grams / 100.0) : 1.0;
+
+        final baseKcal = meal.calories / oldFactor;
+        final baseProtein = meal.protein / oldFactor;
+        final baseFat = meal.fat / oldFactor;
+        final baseCarbs = meal.carbs / oldFactor;
+        final baseFiber = meal.fiber / oldFactor;
+        final baseSugars = meal.sugars / oldFactor;
+        final baseSalt = meal.salt / oldFactor;
+
+        final newFactor = newGrams / 100.0;
+
+        final newMeal = Meal(
+          name: meal.name,
+          calories: (baseKcal * newFactor).round(),
+          protein: baseProtein * newFactor,
+          fat: baseFat * newFactor,
+          carbs: baseCarbs * newFactor,
+          fiber: baseFiber * newFactor,
+          sugars: baseSugars * newFactor,
+          salt: baseSalt * newFactor,
+          grams: newGrams,
+        );
+
+        _removeMealFromTotals(meal);
+        _addMealToTotals(newMeal);
+        meals[index] = newMeal;
+
+        _showSnack('Meal updated');
+      }
+    });
+  }
+
   void _showAddWithGramsDialog(Map<String, dynamic> product) {
     final nutriments =
         (product['nutriments'] as Map<String, dynamic>?) ?? {};
@@ -141,23 +206,21 @@ class _DietScreenState extends State<DietScreen> {
 
               final factor = grams / 100.0;
 
-              setState(() {
-                caloriesConsumed += (kcal100 * factor).round();
-                proteinConsumed += protein100 * factor;
-                fatConsumed += fat100 * factor;
-                carbConsumed += carbs100 * factor;
+              final newMeal = Meal(
+                name: name,
+                calories: (kcal100 * factor).round(),
+                protein: protein100 * factor,
+                fat: fat100 * factor,
+                carbs: carbs100 * factor,
+                fiber: fiber100 * factor,
+                sugars: sugars100 * factor,
+                salt: salt100 * factor,
+                grams: grams.round(),
+              );
 
-                meals.add(Meal(
-                  name: '$name (${grams.round()} g)',
-                  calories: (kcal100 * factor).round(),
-                  protein: protein100 * factor,
-                  fat: fat100 * factor,
-                  carbs: carbs100 * factor,
-                  fiber: fiber100 * factor,
-                  sugars: sugars100 * factor,
-                  salt: salt100 * factor,
-                  grams: grams.round(),
-                ));
+              setState(() {
+                _addMealToTotals(newMeal);
+                meals.add(newMeal);
               });
 
               Navigator.pop(context);
@@ -222,21 +285,142 @@ class _DietScreenState extends State<DietScreen> {
             ),
           ),
           Expanded(
-            child: ListView.separated(
+            child: meals.isEmpty
+                ? const Center(child: Text('No meals added yet'))
+                : ListView.separated(
               itemCount: meals.length,
               separatorBuilder: (_, __) => const Divider(),
               itemBuilder: (_, i) {
-                final meal = meals[meals.length - 1 - i];
+                // invert index to show newest at top, but keep correct index for logic
+                final index = meals.length - 1 - i;
+                final meal = meals[index];
+
                 return ListTile(
                   leading: const Icon(Icons.restaurant),
                   title: Text(meal.name),
+                  subtitle: Text('${meal.grams} g'),
                   trailing: Text('${meal.calories} kcal'),
+                  onTap: () => _onMealTap(index), // Enable click
                 );
               },
             ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class MealDetailsDialog extends StatefulWidget {
+  final Meal meal;
+
+  const MealDetailsDialog({required this.meal, super.key});
+
+  @override
+  State<MealDetailsDialog> createState() => _MealDetailsDialogState();
+}
+
+class _MealDetailsDialogState extends State<MealDetailsDialog> {
+  late TextEditingController _gramsController;
+
+  late double _baseKcal;
+  late double _baseProtein;
+  late double _baseFat;
+  late double _baseCarbs;
+  late double _baseFiber;
+  late double _baseSugars;
+  late double _baseSalt;
+
+  @override
+  void initState() {
+    super.initState();
+    _gramsController = TextEditingController(text: widget.meal.grams.toString());
+
+    final factor = widget.meal.grams > 0 ? (widget.meal.grams / 100.0) : 1.0;
+
+    _baseKcal = widget.meal.calories / factor;
+    _baseProtein = widget.meal.protein / factor;
+    _baseFat = widget.meal.fat / factor;
+    _baseCarbs = widget.meal.carbs / factor;
+    _baseFiber = widget.meal.fiber / factor;
+    _baseSugars = widget.meal.sugars / factor;
+    _baseSalt = widget.meal.salt / factor;
+  }
+
+  @override
+  void dispose() {
+    _gramsController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentGrams = int.tryParse(_gramsController.text) ?? 0;
+    final factor = currentGrams / 100.0;
+
+    return AlertDialog(
+      title: Text(widget.meal.name),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: _gramsController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: 'Grams',
+                suffixText: 'g',
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (_) => setState(() {}),
+            ),
+            const SizedBox(height: 20),
+            const Text('Nutritional Values:', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Divider(),
+            _buildRow('Calories', '${(_baseKcal * factor).round()} kcal'),
+            _buildRow('Protein', '${(_baseProtein * factor).toStringAsFixed(1)} g'),
+            _buildRow('Fat', '${(_baseFat * factor).toStringAsFixed(1)} g'),
+            _buildRow('Carbs', '${(_baseCarbs * factor).toStringAsFixed(1)} g'),
+            _buildRow('Fiber', '${(_baseFiber * factor).toStringAsFixed(1)} g'),
+            _buildRow('Sugars', '${(_baseSugars * factor).toStringAsFixed(1)} g'),
+            _buildRow('Salt', '${(_baseSalt * factor).toStringAsFixed(1)} g'),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, 'delete'),
+          style: TextButton.styleFrom(foregroundColor: Colors.red),
+          child: const Text('Delete'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            final newGrams = int.tryParse(_gramsController.text);
+            if (newGrams != null && newGrams > 0) {
+              Navigator.pop(context, newGrams);
+            }
+          },
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
