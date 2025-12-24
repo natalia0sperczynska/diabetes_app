@@ -11,10 +11,13 @@ class AnalysisContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AnalysisViewModel>();
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
 
     if (vm.isLoading) {
-      return const Center(
-          child: CircularProgressIndicator(color: AppColors.mainBlue));
+      return Center(
+          child: CircularProgressIndicator(color: colorScheme.primary));
     }
 
     return SingleChildScrollView(
@@ -25,25 +28,29 @@ class AnalysisContent extends StatelessWidget {
           _buildSectionTitle("Time in Range", context),
           const SizedBox(height: 16),
           _buildTimeInRangeChart(
+              context,
               vm.stats.ranges['veryHigh'] ?? 0.0,
-              vm.stats.ranges['high'] ?? 0.0 ,
+              vm.stats.ranges['high'] ?? 0.0,
               vm.stats.ranges['inTarget'] ?? 0.0,
-              vm.stats.ranges['low'] ?? 0.0, vm.stats.ranges['veryLow'] ?? 0.0
-          ),
+              vm.stats.ranges['low'] ?? 0.0,
+              vm.stats.ranges['veryLow'] ?? 0.0),
           const SizedBox(height: 24),
           _buildSectionTitle("Glucose Metrics", context),
           const SizedBox(height: 16),
-
-          _buildMetricsRow(title1: "Average Glucose",
+          _buildMetricsRow(
+            context,
+            title1: "Average Glucose",
             value1: "${vm.stats.averageGlucose.toInt()}",
             unit1: "mg/dL",
-            color1: AppColors.mainBlue,
+            color1: colorScheme.primary,
             title2: "GMI  (Glucose Management Indicator)",
             value2: "${vm.stats.gmi}",
             unit2: "%",
-            color2: AppColors.pink,),
+            color2: colorScheme.secondary,
+          ),
           const SizedBox(height: 16),
           _buildMetricsRow(
+            context,
             title1: "Standard Deviation",
             value1: "${vm.stats.standardDeviation.toInt()}",
             unit1: "mg/dL",
@@ -54,48 +61,60 @@ class AnalysisContent extends StatelessWidget {
             color2: Colors.purpleAccent,
           ),
           const SizedBox(height: 16),
-          _buildSensorUsageCard(vm.stats.sensorActivePercent),
-
+          _buildSensorUsageCard(context, vm.stats.sensorActivePercent),
           const SizedBox(height: 24),
           _buildSectionTitle("Ambulatory Glucose Profile", context),
           const SizedBox(height: 16),
-          _buildGlucoseTrendChart(),
+          _buildGlucoseTrendChart(context),
         ],
       ),
     );
   }
 
-  Widget _buildSectionTitle(String title, context) {
-    final textTheme = Theme.of(context).textTheme;
-    return Text(title, style: textTheme.headlineMedium);
+  Widget _buildSectionTitle(String title, BuildContext context) {
+    return Text(title, style: Theme
+        .of(context)
+        .textTheme
+        .headlineMedium);
   }
-  Widget _buildMetricsRow({
-    required String title1, required String value1, required String unit1, required Color color1,
-    required String title2, required String value2, required String unit2, required Color color2,
+
+  Widget _buildMetricsRow(BuildContext context, {
+    required String title1,
+    required String value1,
+    required String unit1,
+    required Color color1,
+    required String title2,
+    required String value2,
+    required String unit2,
+    required Color color2,
   }) {
     return Row(
       children: [
         Expanded(
-          child: _buildMetricCard(title1, value1, unit1, color1),
+          child: _buildMetricCard(context, title1, value1, unit1, color1),
         ),
         const SizedBox(width: 16),
         Expanded(
-          child: _buildMetricCard(title2, value2, unit2, color2),
+          child: _buildMetricCard(context, title2, value2, unit2, color2),
         ),
       ],
     );
   }
 
-  Widget _buildMetricCard(String title, String value, String unit, Color color) {
+  Widget _buildMetricCard(BuildContext context,
+      String title, String value, String unit, Color color) {
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkBlue1,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border(left: BorderSide(color: color, width: 4)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           )
@@ -105,7 +124,8 @@ class AnalysisContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(title,
-              style: const TextStyle(color: Colors.white70, fontSize: 12),
+              style: TextStyle(
+                  color: colorScheme.onSurfaceVariant, fontSize: 12),
               maxLines: 1,
               overflow: TextOverflow.ellipsis),
           const SizedBox(height: 8),
@@ -114,8 +134,8 @@ class AnalysisContent extends StatelessWidget {
             children: [
               Text(
                 value,
-                style: const TextStyle(
-                    color: Colors.white,
+                style: TextStyle(
+                    color: colorScheme.onSurface,
                     fontSize: 24,
                     fontWeight: FontWeight.bold),
               ),
@@ -124,7 +144,8 @@ class AnalysisContent extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(unit,
                     style:
-                    const TextStyle(color: Colors.white54, fontSize: 12)),
+                    TextStyle(
+                        color: colorScheme.onSurfaceVariant, fontSize: 12)),
               ),
             ],
           ),
@@ -132,26 +153,33 @@ class AnalysisContent extends StatelessWidget {
       ),
     );
   }
-  Widget _buildSensorUsageCard(double usagePercent) {
+
+  Widget _buildSensorUsageCard(BuildContext context, double usagePercent) {
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.darkBlue1,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white12),
+        border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const Column(
+          Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text("Sensor Active",
-                  style: TextStyle(color: Colors.white70, fontSize: 12)),
-              SizedBox(height: 4),
+                  style: TextStyle(
+                      color: colorScheme.onSurfaceVariant, fontSize: 12)),
+              const SizedBox(height: 4),
               Text("Data availability",
-                  style: TextStyle(color: Colors.white30, fontSize: 10)),
+                  style: TextStyle(
+                      color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                      fontSize: 10)),
             ],
           ),
           Row(
@@ -159,13 +187,16 @@ class AnalysisContent extends StatelessWidget {
               Text(
                 "$usagePercent",
                 style: TextStyle(
-                    color: usagePercent > 70 ? AppColors.green : Colors.redAccent,
+                    color:
+                    usagePercent > 70 ? AppColors.green : Colors.redAccent,
                     fontSize: 24,
                     fontWeight: FontWeight.bold),
               ),
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0, left: 2),
-                child: Text("%", style: TextStyle(color: Colors.white54, fontSize: 12)),
+              Padding(
+                padding: const EdgeInsets.only(top: 8.0, left: 2),
+                child: Text("%",
+                    style: TextStyle(
+                        color: colorScheme.onSurfaceVariant, fontSize: 12)),
               ),
             ],
           )
@@ -174,13 +205,18 @@ class AnalysisContent extends StatelessWidget {
     );
   }
 
-  Widget _buildTimeInRangeChart(double veryHigh, double high, double inRange, double low, double veryLow) {
+  Widget _buildTimeInRangeChart(BuildContext context, double veryHigh,
+      double high, double inRange,
+      double low, double veryLow) {
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: AppColors.darkBlue1,
+        color: colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.pixelBorder.withOpacity(0.3)),
+        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -252,19 +288,24 @@ class AnalysisContent extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLegendItem(Colors.orange[900]!, "Very High (>250)", veryHigh),
+                  _buildLegendItem(context,
+                      Colors.orange[900]!, "Very High (>250)", veryHigh),
                   const SizedBox(height: 8),
-                  _buildLegendItem(Colors.orangeAccent, "High (181-250)", high),
+                  _buildLegendItem(
+                      context, Colors.orangeAccent, "High (181-250)", high),
                   const SizedBox(height: 8),
-                  _buildLegendItem(AppColors.green, "Target (70-180)", inRange),
+                  _buildLegendItem(
+                      context, AppColors.green, "Target (70-180)", inRange),
                 ],
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLegendItem(Colors.redAccent, "Low (54-69)", low),
+                  _buildLegendItem(
+                      context, Colors.redAccent, "Low (54-69)", low),
                   const SizedBox(height: 8),
-                  _buildLegendItem(const Color(0xFF8B0000), "Very Low (<54)", veryLow),
+                  _buildLegendItem(context,
+                      const Color(0xFF8B0000), "Very Low (<54)", veryLow),
                 ],
               )
             ],
@@ -273,7 +314,13 @@ class AnalysisContent extends StatelessWidget {
       ),
     );
   }
-  Widget _buildLegendItem(Color color, String label, double value) {
+
+  Widget _buildLegendItem(BuildContext context, Color color, String label,
+      double value) {
+    final textColor = Theme
+        .of(context)
+        .colorScheme
+        .onSurfaceVariant;
     return Row(
       children: [
         Container(
@@ -283,19 +330,22 @@ class AnalysisContent extends StatelessWidget {
         ),
         const SizedBox(width: 6),
         Text("$label: ${value.toInt()}%",
-            style: const TextStyle(color: Colors.white70, fontSize: 11)),
+            style: TextStyle(color: textColor, fontSize: 11)),
       ],
     );
   }
 
-  Widget _buildGlucoseTrendChart() {
+  Widget _buildGlucoseTrendChart(BuildContext context) {
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Container(
         height: 200,
         decoration: BoxDecoration(
-            color: AppColors.darkBlue1,
+            color: colorScheme.surface,
             borderRadius: BorderRadius.circular(16)),
-        child: const Center(
+        child: Center(
             child: Text("Graph Placeholder",
-                style: TextStyle(color: Colors.white))));
+                style: TextStyle(color: colorScheme.onSurface))));
   }
 }
