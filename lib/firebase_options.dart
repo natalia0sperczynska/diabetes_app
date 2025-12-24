@@ -85,4 +85,5 @@ class DefaultFirebaseOptions {
     storageBucket: 'diabetes-app-81f7d.firebasestorage.app',
     measurementId: 'G-MZNH85447C',
   );
+
 }

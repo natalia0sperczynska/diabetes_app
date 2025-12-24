@@ -13,7 +13,9 @@ class AnalysisContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AnalysisViewModel>();
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
 
     if (vm.isLoading) {
       return Center(
@@ -21,7 +23,9 @@ class AnalysisContent extends StatelessWidget {
     }
     return Stack(
       children: [
-        Container(color: Theme.of(context).scaffoldBackgroundColor),
+        Container(color: Theme
+            .of(context)
+            .scaffoldBackgroundColor),
         Positioned.fill(
           child: Opacity(
             opacity: 0.15,
@@ -82,6 +86,9 @@ class AnalysisContent extends StatelessWidget {
               _buildSectionTitle("AMBULATORY PROFILE", context),
               const SizedBox(height: 16),
               _buildGlucoseTrendChart(context),
+              const SizedBox(height: 24),
+              _buildAIAnalysis(context, vm),
+              const SizedBox(height: 24),
             ],
           ),
         ),
@@ -94,7 +101,9 @@ class AnalysisContent extends StatelessWidget {
     required Widget child,
     required Color color,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Container(
       decoration: ShapeDecoration(
         color: colorScheme.surface.withOpacity(0.85),
@@ -116,7 +125,9 @@ class AnalysisContent extends StatelessWidget {
   }
 
   Widget _buildSectionTitle(String title, BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Row(
       children: [
         Container(
@@ -138,8 +149,7 @@ class AnalysisContent extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricsRow(
-    BuildContext context, {
+  Widget _buildMetricsRow(BuildContext context, {
     required String title1,
     required String value1,
     required String unit1,
@@ -164,7 +174,9 @@ class AnalysisContent extends StatelessWidget {
 
   Widget _buildMetricCard(BuildContext context, String title, String value,
       String unit, Color color) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return _buildCyberContainer(
       context: context,
       color: color,
@@ -174,10 +186,10 @@ class AnalysisContent extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CyberGlitchText(title,
-                style: GoogleFonts.iceland(
-                    color: colorScheme.onSurfaceVariant,
-                    fontSize: 14,
-                    letterSpacing: 1),
+              style: GoogleFonts.iceland(
+                  color: colorScheme.onSurfaceVariant,
+                  fontSize: 14,
+                  letterSpacing: 1),
             ),
             const SizedBox(height: 8),
             Row(
@@ -204,7 +216,9 @@ class AnalysisContent extends StatelessWidget {
   }
 
   Widget _buildSensorUsageCard(BuildContext context, double usagePercent) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     final statusColor = usagePercent > 70 ? AppColors.green : colorScheme.error;
 
     return _buildCyberContainer(
@@ -255,7 +269,9 @@ class AnalysisContent extends StatelessWidget {
 
   Widget _buildTimeInRangeChart(BuildContext context, double veryHigh,
       double high, double inRange, double low, double veryLow) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       child: Row(
@@ -355,27 +371,35 @@ class AnalysisContent extends StatelessWidget {
     );
   }
 
-  Widget _buildLegendItem(
-      BuildContext context, Color color, String label, double value) {
-    final textColor = Theme.of(context).colorScheme.onSurfaceVariant;
+  Widget _buildLegendItem(BuildContext context, Color color, String label,
+      double value) {
+    final textColor = Theme
+        .of(context)
+        .colorScheme
+        .onSurfaceVariant;
     return Row(
       children: [
         Container(
           width: 10,
           height: 10,
           decoration:
-              BoxDecoration(color: color, borderRadius: BorderRadius.zero),
+          BoxDecoration(color: color, borderRadius: BorderRadius.zero),
         ),
         const SizedBox(width: 8),
         CyberGlitchText(label,
             style: GoogleFonts.iceland(
-                color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
+                color: Theme
+                    .of(context)
+                    .colorScheme
+                    .onSurface, fontSize: 14)),
       ],
     );
   }
 
   Widget _buildGlucoseTrendChart(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
     return _buildCyberContainer(
       context: context,
       color: colorScheme.onSurface.withOpacity(0.3),
@@ -385,15 +409,95 @@ class AnalysisContent extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         child: Center(
             child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.show_chart,
+                    color: colorScheme.primary.withOpacity(0.5), size: 48),
+                CyberGlitchText("[ CHART LOADING... ]",
+                    style: GoogleFonts.vt323(
+                        color: colorScheme.onSurfaceVariant, fontSize: 18)),
+              ],
+            )),
+      ),
+    );
+  }
+
+  _buildAIAnalysis(BuildContext context, AnalysisViewModel vm) {
+    final colorScheme = Theme
+        .of(context)
+        .colorScheme;
+    return _buildCyberContainer(
+      context: context,
+      color: Colors.purpleAccent,
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.show_chart,
-                color: colorScheme.primary.withOpacity(0.5), size: 48),
-            CyberGlitchText("[ CHART LOADING... ]",
-                style: GoogleFonts.vt323(
-                    color: colorScheme.onSurfaceVariant, fontSize: 18)),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.auto_awesome, color: Colors.purpleAccent),
+                    const SizedBox(width: 8),
+                    CyberGlitchText(
+                      "AI DIAGNOSTIC",
+                      style: GoogleFonts.vt323(
+                        fontSize: 22,
+                        color: colorScheme.onSurface,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+                if (vm.aiAnalysisResult.isEmpty && !vm.isAiLoading)
+                  GestureDetector(
+                    onTap: () => vm.generateSmartAnalysis(),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.purpleAccent),
+                        color: Colors.purpleAccent.withOpacity(0.2),
+                      ),
+                      child: Text("ANALYZE",
+                          style: GoogleFonts.vt323(color: Colors.white)),
+                    ),
+                  )
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (vm.isAiLoading)
+              Row(
+                children: [
+                  const SizedBox(width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.purpleAccent)),
+                  const SizedBox(width: 10),
+                  Text("Computing...",
+                      style: GoogleFonts.vt323(color: Colors.grey)),
+                ],
+              )
+            else
+              if (vm.aiAnalysisResult.isNotEmpty)
+                Text(
+                  vm.aiAnalysisResult,
+                  style: GoogleFonts.shareTechMono(
+                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.9),
+                    height: 1.4,
+                  ),
+                )
+              else
+                Text(
+                  "Click ANALYZE to process your data",
+                  style: GoogleFonts.vt323(
+                      color: Colors.grey.withOpacity(0.5), fontSize: 16),
+                ),
           ],
-        )),
+        ),
       ),
     );
   }
