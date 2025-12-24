@@ -6,9 +6,9 @@ class AppColors {
   static const darkBlue1 = Color(0xFF345482);
   static const darkBlue2 = Color(0xFF121D2D);
   static const lightBlue1 = Color(0xFF567ED7);
-  static const lightBlue2 = Color(0xFF5698D7);
-  static const pink = Color(0xFFD756CB);
-  static const green = Color(0xFF56D761);
+  static const lightBlue2 = Color(0x8000FFFF);
+  static const pink = Color(0xFFFF00FF);
+  static const green = Color(0xFF39FF14);
   static const pixelBorder = Color(0xFF6A0DAD);
   static const black = Color(0xFF000000);
   static const grey = Color(0x8000000);
@@ -77,4 +77,12 @@ class AppColors {
   static const oceanBlueSecondaryLight = Color(0xFFB3E5FC);
   static const oceanBlueSurfaceLight = Color(0xFFE1F5FE);
   static const oceanBlueBackgroundLight = Color(0xFFB3E5FC);
+
+  //dodalam cyberpunkowy motyw bo uwazam ze mega siedzi
+  static const cyberBlack = Color(0xFF050A14);
+  static const cyberDarkBlue = Color(0xFF0B1221);
+  static const neonPink = Color(0xFFFF00FF);
+  static const neonCyan = Color(0xFF00FFFF);
+  static const neonGreen = Color(0xFF39FF14);
+  static const hologramBlue = Color(0x8000FFFF);
 }

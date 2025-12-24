@@ -35,6 +35,8 @@ class ThemeViewModel extends ChangeNotifier {
         return AppTheme.deepPurpleLightTheme;
       case 'oceanBlue':
         return AppTheme.oceanBlueLightTheme;
+      case 'cyberPunk':
+        return AppTheme.cyberpunkTheme;
       case 'pixel':
       default:
         return AppTheme.pixelLightTheme;
@@ -53,6 +55,8 @@ class ThemeViewModel extends ChangeNotifier {
         return AppTheme.deepPurpleTheme;
       case 'oceanBlue':
         return AppTheme.oceanBlueTheme;
+      case 'cyberPunk':
+        return AppTheme.cyberpunkTheme;
       case 'pixel':
       default:
         return AppTheme.pixelTheme;

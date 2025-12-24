@@ -43,7 +43,7 @@ class MyApp extends StatelessWidget {
     final themeViewModel = Provider.of<ThemeViewModel>(context);
 
     return MaterialApp(
-      title: 'Diabetes App',
+      title: 'Diabeto',
       themeMode: themeViewModel.themeMode,
       theme: themeViewModel.lightThemeData,
       darkTheme: themeViewModel.darkThemeData,
