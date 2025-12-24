@@ -22,7 +22,7 @@ class AuthWrapper extends StatelessWidget {
                 children: [
                   // Logo
                   Image.asset(
-                    'assets/images/diabetes_logo_placeholder.png',
+                    'assets/images/logo_diabeto.png',
                     width: 150,
                     height: 150,
                   ),
