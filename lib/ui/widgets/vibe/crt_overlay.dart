@@ -16,12 +16,12 @@ class CrtOverlay extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment.center,
-                radius: 1.0,
+                radius: 1.1,
                 colors: [
                   Colors.transparent,
                   Colors.black.withOpacity(0.4),
                 ],
-                stops: const [0.7, 1.0],
+                stops: const [0.8, 1.0],
               ),
             ),
           ),
@@ -35,7 +35,7 @@ class _ScanLinePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black.withOpacity(0.15)
+      ..color = Colors.black.withOpacity(0.10)
       ..strokeWidth = 1;
 
     for (double y = 0; y < size.height; y += 3) {
