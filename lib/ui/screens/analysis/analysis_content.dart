@@ -1,6 +1,7 @@
 import 'package:diabetes_app/ui/view_models/analysis_view_model.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../themes/colors/app_colors.dart';
 import 'package:provider/provider.dart';
 
@@ -11,74 +12,133 @@ class AnalysisContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<AnalysisViewModel>();
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
 
     if (vm.isLoading) {
       return Center(
           child: CircularProgressIndicator(color: colorScheme.primary));
     }
+    return Stack(
+      children: [
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.15,
+            child: Image.asset(
+              'assets/images/grid.png',
+              repeat: ImageRepeat.repeat,
+              scale: 1.0,
+            ),
+          ),
+        ),
+        SingleChildScrollView(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildSectionTitle("SYSTEM ANALYSIS", context),
+              const SizedBox(height: 16),
+              _buildCyberContainer(
+                context: context,
+                color: colorScheme.primary,
+                child: _buildTimeInRangeChart(
+                    context,
+                    vm.stats.ranges['veryHigh'] ?? 0.0,
+                    vm.stats.ranges['high'] ?? 0.0,
+                    vm.stats.ranges['inTarget'] ?? 0.0,
+                    vm.stats.ranges['low'] ?? 0.0,
+                    vm.stats.ranges['veryLow'] ?? 0.0),
+              ),
+              const SizedBox(height: 24),
+              _buildSectionTitle("METRICS DATA", context),
+              const SizedBox(height: 16),
+              _buildMetricsRow(
+                context,
+                title1: "AVERAGE GLUCOSE",
+                value1: "${vm.stats.averageGlucose.toInt()}",
+                unit1: "mg/dL",
+                color1: colorScheme.primary,
+                title2: "GMI  (GLUCOSE MANAGEMENT INDICATOR)",
+                value2: "${vm.stats.gmi}",
+                unit2: "%",
+                color2: colorScheme.secondary,
+              ),
+              const SizedBox(height: 16),
+              _buildMetricsRow(
+                context,
+                title1: "STANDARD DEVIATION",
+                value1: "${vm.stats.standardDeviation.toInt()}",
+                unit1: "mg/dL",
+                color1: colorScheme.tertiary,
+                title2: "COEFFICIENT OF VARIATION",
+                value2: "${vm.stats.coefficientOfVariation}",
+                unit2: "%",
+                color2: colorScheme.error,
+              ),
+              const SizedBox(height: 16),
+              _buildSensorUsageCard(context, vm.stats.sensorActivePercent),
+              const SizedBox(height: 24),
+              _buildSectionTitle("AMBULATORY PROFILE", context),
+              const SizedBox(height: 16),
+              _buildGlucoseTrendChart(context),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildSectionTitle("Time in Range", context),
-          const SizedBox(height: 16),
-          _buildTimeInRangeChart(
-              context,
-              vm.stats.ranges['veryHigh'] ?? 0.0,
-              vm.stats.ranges['high'] ?? 0.0,
-              vm.stats.ranges['inTarget'] ?? 0.0,
-              vm.stats.ranges['low'] ?? 0.0,
-              vm.stats.ranges['veryLow'] ?? 0.0),
-          const SizedBox(height: 24),
-          _buildSectionTitle("Glucose Metrics", context),
-          const SizedBox(height: 16),
-          _buildMetricsRow(
-            context,
-            title1: "Average Glucose",
-            value1: "${vm.stats.averageGlucose.toInt()}",
-            unit1: "mg/dL",
-            color1: colorScheme.primary,
-            title2: "GMI  (Glucose Management Indicator)",
-            value2: "${vm.stats.gmi}",
-            unit2: "%",
-            color2: colorScheme.secondary,
+  Widget _buildCyberContainer({
+    required BuildContext context,
+    required Widget child,
+    required Color color,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      decoration: ShapeDecoration(
+        color: colorScheme.surface.withOpacity(0.85),
+        shape: BeveledRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: color, width: 2),
+        ),
+        shadows: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 12,
+            spreadRadius: -2,
+            offset: const Offset(0, 0),
           ),
-          const SizedBox(height: 16),
-          _buildMetricsRow(
-            context,
-            title1: "Standard Deviation",
-            value1: "${vm.stats.standardDeviation.toInt()}",
-            unit1: "mg/dL",
-            color1: Colors.orangeAccent,
-            title2: "Coefficient of Variation",
-            value2: "${vm.stats.coefficientOfVariation}",
-            unit2: "%",
-            color2: Colors.purpleAccent,
-          ),
-          const SizedBox(height: 16),
-          _buildSensorUsageCard(context, vm.stats.sensorActivePercent),
-          const SizedBox(height: 24),
-          _buildSectionTitle("Ambulatory Glucose Profile", context),
-          const SizedBox(height: 16),
-          _buildGlucoseTrendChart(context),
         ],
       ),
+      child: child,
     );
   }
 
   Widget _buildSectionTitle(String title, BuildContext context) {
-    return Text(title, style: Theme
-        .of(context)
-        .textTheme
-        .headlineMedium);
+    final colorScheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        Container(
+          width: 8,
+          height: 24,
+          color: colorScheme.primary,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          title.toUpperCase(),
+          style: GoogleFonts.vt323(
+            fontSize: 26,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 2.0,
+            color: colorScheme.onBackground,
+          ),
+        ),
+      ],
+    );
   }
 
-  Widget _buildMetricsRow(BuildContext context, {
+  Widget _buildMetricsRow(
+    BuildContext context, {
     required String title1,
     required String value1,
     required String unit1,
@@ -101,123 +161,103 @@ class AnalysisContent extends StatelessWidget {
     );
   }
 
-  Widget _buildMetricCard(BuildContext context,
-      String title, String value, String unit, Color color) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border(left: BorderSide(color: color, width: 4)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
-          )
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title,
-              style: TextStyle(
-                  color: colorScheme.onSurfaceVariant, fontSize: 12),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis),
-          const SizedBox(height: 8),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                value,
-                style: TextStyle(
-                    color: colorScheme.onSurface,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(width: 4),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: Text(unit,
-                    style:
-                    TextStyle(
-                        color: colorScheme.onSurfaceVariant, fontSize: 12)),
-              ),
-            ],
-          ),
-        ],
+  Widget _buildMetricCard(BuildContext context, String title, String value,
+      String unit, Color color) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return _buildCyberContainer(
+      context: context,
+      color: color,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title,
+                style: GoogleFonts.iceland(
+                    color: colorScheme.onSurfaceVariant,
+                    fontSize: 14,
+                    letterSpacing: 1),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis),
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  value,
+                  style: GoogleFonts.vt323(
+                      color: color, fontSize: 40, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(unit,
+                      style: TextStyle(
+                          color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildSensorUsageCard(BuildContext context, double usagePercent) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.onSurface.withOpacity(0.12)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text("Sensor Active",
+    final colorScheme = Theme.of(context).colorScheme;
+    final statusColor = usagePercent > 70 ? AppColors.green : colorScheme.error;
+
+    return _buildCyberContainer(
+      context: context,
+      color: statusColor,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text("SENSOR STATUS",
+                    style: GoogleFonts.vt323(
+                        color: colorScheme.onSurfaceVariant, fontSize: 22)),
+                const SizedBox(height: 4),
+                Text("Signal availability",
+                    style: GoogleFonts.iceland(
+                        color: colorScheme.onSurfaceVariant.withOpacity(0.5),
+                        fontSize: 12)),
+              ],
+            ),
+            Row(
+              children: [
+                Text(
+                  "$usagePercent",
                   style: TextStyle(
-                      color: colorScheme.onSurfaceVariant, fontSize: 12)),
-              const SizedBox(height: 4),
-              Text("Data availability",
-                  style: TextStyle(
-                      color: colorScheme.onSurfaceVariant.withOpacity(0.5),
-                      fontSize: 10)),
-            ],
-          ),
-          Row(
-            children: [
-              Text(
-                "$usagePercent",
-                style: TextStyle(
-                    color:
-                    usagePercent > 70 ? AppColors.green : Colors.redAccent,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8.0, left: 2),
-                child: Text("%",
-                    style: TextStyle(
-                        color: colorScheme.onSurfaceVariant, fontSize: 12)),
-              ),
-            ],
-          )
-        ],
+                      color: usagePercent > 70
+                          ? AppColors.green
+                          : Colors.redAccent,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(top: 8.0, left: 2),
+                  child: Text("%",
+                      style: TextStyle(
+                          color: colorScheme.onSurfaceVariant, fontSize: 12)),
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildTimeInRangeChart(BuildContext context, double veryHigh,
-      double high, double inRange,
-      double low, double veryLow) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
+      double high, double inRange, double low, double veryLow) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainer,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withOpacity(0.3)),
-      ),
       child: Row(
         children: [
           Expanded(
@@ -232,15 +272,15 @@ class AnalysisContent extends StatelessWidget {
                       color: AppColors.green,
                       value: inRange,
                       title: '${inRange.toInt()}%',
-                      radius: 50,
-                      titleStyle: const TextStyle(
+                      radius: 45,
+                      titleStyle: GoogleFonts.vt323(
                           fontWeight: FontWeight.bold, color: Colors.white),
                     ),
                     PieChartSectionData(
                       color: Colors.orange[900],
                       value: veryHigh,
                       title: '${veryHigh.toInt()}%',
-                      radius: 45,
+                      radius: 40,
                       titleStyle: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -250,7 +290,7 @@ class AnalysisContent extends StatelessWidget {
                       color: Colors.orangeAccent,
                       value: high,
                       title: '${high.toInt()}%',
-                      radius: 45,
+                      radius: 40,
                       titleStyle: const TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -288,8 +328,8 @@ class AnalysisContent extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLegendItem(context,
-                      Colors.orange[900]!, "Very High (>250)", veryHigh),
+                  _buildLegendItem(context, Colors.orange[900]!,
+                      "Very High (>250)", veryHigh),
                   const SizedBox(height: 8),
                   _buildLegendItem(
                       context, Colors.orangeAccent, "High (181-250)", high),
@@ -304,8 +344,8 @@ class AnalysisContent extends StatelessWidget {
                   _buildLegendItem(
                       context, Colors.redAccent, "Low (54-69)", low),
                   const SizedBox(height: 8),
-                  _buildLegendItem(context,
-                      const Color(0xFF8B0000), "Very Low (<54)", veryLow),
+                  _buildLegendItem(context, const Color(0xFF8B0000),
+                      "Very Low (<54)", veryLow),
                 ],
               )
             ],
@@ -315,37 +355,46 @@ class AnalysisContent extends StatelessWidget {
     );
   }
 
-  Widget _buildLegendItem(BuildContext context, Color color, String label,
-      double value) {
-    final textColor = Theme
-        .of(context)
-        .colorScheme
-        .onSurfaceVariant;
+  Widget _buildLegendItem(
+      BuildContext context, Color color, String label, double value) {
+    final textColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       children: [
         Container(
           width: 10,
           height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          decoration:
+              BoxDecoration(color: color, borderRadius: BorderRadius.zero),
         ),
-        const SizedBox(width: 6),
-        Text("$label: ${value.toInt()}%",
-            style: TextStyle(color: textColor, fontSize: 11)),
+        const SizedBox(width: 8),
+        Text(label,
+            style: GoogleFonts.iceland(
+                color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
       ],
     );
   }
 
   Widget _buildGlucoseTrendChart(BuildContext context) {
-    final colorScheme = Theme
-        .of(context)
-        .colorScheme;
-    return Container(
+    final colorScheme = Theme.of(context).colorScheme;
+    return _buildCyberContainer(
+      context: context,
+      color: colorScheme.onSurface.withOpacity(0.3),
+      child: Container(
         height: 200,
-        decoration: BoxDecoration(
-            color: colorScheme.surface,
-            borderRadius: BorderRadius.circular(16)),
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
         child: Center(
-            child: Text("Graph Placeholder",
-                style: TextStyle(color: colorScheme.onSurface))));
+            child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.show_chart,
+                color: colorScheme.primary.withOpacity(0.5), size: 48),
+            Text("[ CHART LOADING... ]",
+                style: GoogleFonts.vt323(
+                    color: colorScheme.onSurfaceVariant, fontSize: 18)),
+          ],
+        )),
+      ),
+    );
   }
 }
