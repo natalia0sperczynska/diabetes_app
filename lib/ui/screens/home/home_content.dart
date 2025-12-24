@@ -1,7 +1,10 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:diabetes_app/ui/widgets/glitch.dart';
 import 'package:diabetes_app/ui/widgets/snack_bars/awesome_snack_bar.dart';
 import 'package:diabetes_app/services/dexcom_service.dart';
+import 'package:google_fonts/google_fonts.dart';
 
+import '../../themes/colors/app_colors.dart';
 import '../../view_models/home_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -26,14 +29,12 @@ class _HomeContentState extends State<HomeContent> {
     try {
       final result = await DexcomService.getCurrentGlucose(
         username: 'anniefocused@gmail.com', // USERNAME ANI
-        password:
-            '',
+        password: '',
       );
 
       if (result['success']) {
         setState(() {
-          _glucoseData =
-              '''
+          _glucoseData = '''
 Glucose: ${result['value']} mg/dL
 Trend: ${result['trend']}
 Time: ${result['time']}
@@ -83,9 +84,10 @@ Time: ${result['time']}
           Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              CyberGlitchText(
                 viewModel.welcomeMessage,
-                style: Theme.of(context).textTheme.headlineSmall,
+                style:
+                    GoogleFonts.vt323(fontSize: 32, color: Theme.of(context).colorScheme.onPrimary),
               ),
               const SizedBox(height: 20),
               FilledButton(
@@ -96,7 +98,12 @@ Time: ${result['time']}
                         height: 20,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text("Load Data"),
+                    : CyberGlitchText(
+                        "Load Data",
+                        style: GoogleFonts.vt323(
+                            fontSize: 32,
+                            color: Theme.of(context).colorScheme.onPrimary),
+                      ),
               ),
             ],
           ),
@@ -111,9 +118,10 @@ Time: ${result['time']}
                   color: Theme.of(context).colorScheme.outline,
                 ),
               ),
-              child: Text(
+              child: CyberGlitchText(
                 _glucoseData,
-                style: Theme.of(context).textTheme.bodyLarge,
+                style: GoogleFonts.vt323(
+                    fontSize: 32, color: Theme.of(context).colorScheme.onPrimary),
               ),
             ),
         ],

@@ -1,5 +1,7 @@
 import 'package:diabetes_app/ui/screens/statistics/statistics_screen.dart';
+import 'package:diabetes_app/ui/widgets/glitch.dart';
 import 'package:flutter/material.dart' hide BottomNavigationBar;
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../themes/colors/app_colors.dart';
 import '../../view_models/home_view_model.dart';
@@ -52,7 +54,7 @@ class HomeScreen extends StatelessWidget {
     ),
       Scaffold(
       backgroundColor: Colors.transparent,
-      appBar: AppBar(title: Text(viewModel.currentTitle),backgroundColor: AppColors.cyberBlack.withOpacity(0.8),),
+      appBar: AppBar(title: CyberGlitchText(viewModel.currentTitle, style: GoogleFonts.vt323(fontSize: 32, color: Theme.of(context).colorScheme.onPrimary)),backgroundColor: AppColors.cyberBlack.withOpacity(0.8),),
       drawer: const AppDrawer(),
       body: SafeArea(child: getBody()),
       bottomNavigationBar: const AppBottomNavigationBar(),

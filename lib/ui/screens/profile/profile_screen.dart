@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/auth_view_model.dart';
 import '../../themes/colors/app_colors.dart';
@@ -179,18 +180,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     // Profile Avatar
                     Center(
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: AppColors.mainBlue,
-                        child: Text(
-                          '${_nameController.text.isNotEmpty ? _nameController.text[0] : ''}${_surnameController.text.isNotEmpty ? _surnameController.text[0] : ''}',
-                          style: const TextStyle(
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: ShapeDecoration(
+                          color: AppColors.mainBlue,
+                          shape: BeveledRectangleBorder(
+                            borderRadius: BorderRadius.circular(20),
+                            side: const BorderSide(color: Colors.white, width: 2),
+                          ),
+                          shadows: [
+                            BoxShadow(color: AppColors.mainBlue.withOpacity(0.5), blurRadius: 20)
+                          ],
+                        ),
+                        child: Center(
+                          child: Text(
+                            '${_nameController.text.isNotEmpty ? _nameController.text[0] : ''}...',
+                            style: GoogleFonts.vt323(fontSize: 40, color: Colors.white), // Font Pixel
                           ),
                         ),
-                      ),
+                      )
                     ),
                     const SizedBox(height: 8),
 
@@ -224,15 +233,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: AppColors.mainBlue,
                               ),
                               filled: true,
-                              fillColor: AppColors.darkBlue1,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
+                              fillColor:Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.zero,
+                                borderSide: BorderSide(color: AppColors.mainBlue.withOpacity(0.5)),
                               ),
-                              disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.white24,
+                              disabledBorder: const OutlineInputBorder(
+                                borderRadius: BorderRadius.zero,
+                                borderSide: BorderSide(
+                                  color: AppColors.pink, width: 2
                                 ),
                               ),
                             ),
@@ -260,15 +269,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 color: AppColors.mainBlue,
                               ),
                               filled: true,
-                              fillColor: AppColors.darkBlue1,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: BorderSide.none,
+                              fillColor:Theme.of(context).colorScheme.primary.withOpacity(0.8),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.zero,
+                                borderSide: BorderSide(color: AppColors.mainBlue.withOpacity(0.5)),
                               ),
-                              disabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12),
-                                borderSide: const BorderSide(
-                                  color: Colors.white24,
+                              disabledBorder: const OutlineInputBorder(
+                                borderRadius: BorderRadius.zero,
+                                borderSide: BorderSide(
+                                    color: AppColors.pink, width: 2
                                 ),
                               ),
                             ),

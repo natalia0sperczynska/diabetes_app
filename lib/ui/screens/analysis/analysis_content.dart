@@ -1,4 +1,5 @@
 import 'package:diabetes_app/ui/view_models/analysis_view_model.dart';
+import 'package:diabetes_app/ui/widgets/glitch.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -124,7 +125,7 @@ class AnalysisContent extends StatelessWidget {
           color: colorScheme.primary,
         ),
         const SizedBox(width: 8),
-        Text(
+        CyberGlitchText(
           title.toUpperCase(),
           style: GoogleFonts.vt323(
             fontSize: 26,
@@ -172,18 +173,17 @@ class AnalysisContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title,
+            CyberGlitchText(title,
                 style: GoogleFonts.iceland(
                     color: colorScheme.onSurfaceVariant,
                     fontSize: 14,
                     letterSpacing: 1),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis),
+            ),
             const SizedBox(height: 8),
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                Text(
+                CyberGlitchText(
                   value,
                   style: GoogleFonts.vt323(
                       color: color, fontSize: 40, fontWeight: FontWeight.bold),
@@ -191,7 +191,7 @@ class AnalysisContent extends StatelessWidget {
                 const SizedBox(width: 4),
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),
-                  child: Text(unit,
+                  child: CyberGlitchText(unit,
                       style: TextStyle(
                           color: colorScheme.onSurfaceVariant, fontSize: 12)),
                 ),
@@ -218,11 +218,11 @@ class AnalysisContent extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text("SENSOR STATUS",
+                CyberGlitchText("SENSOR STATUS",
                     style: GoogleFonts.vt323(
                         color: colorScheme.onSurfaceVariant, fontSize: 22)),
                 const SizedBox(height: 4),
-                Text("Signal availability",
+                CyberGlitchText("Signal availability",
                     style: GoogleFonts.iceland(
                         color: colorScheme.onSurfaceVariant.withOpacity(0.5),
                         fontSize: 12)),
@@ -230,7 +230,7 @@ class AnalysisContent extends StatelessWidget {
             ),
             Row(
               children: [
-                Text(
+                CyberGlitchText(
                   "$usagePercent",
                   style: TextStyle(
                       color: usagePercent > 70
@@ -241,7 +241,7 @@ class AnalysisContent extends StatelessWidget {
                 ),
                 Padding(
                   padding: const EdgeInsets.only(top: 8.0, left: 2),
-                  child: Text("%",
+                  child: CyberGlitchText("%",
                       style: TextStyle(
                           color: colorScheme.onSurfaceVariant, fontSize: 12)),
                 ),
@@ -367,7 +367,7 @@ class AnalysisContent extends StatelessWidget {
               BoxDecoration(color: color, borderRadius: BorderRadius.zero),
         ),
         const SizedBox(width: 8),
-        Text(label,
+        CyberGlitchText(label,
             style: GoogleFonts.iceland(
                 color: Theme.of(context).colorScheme.onSurface, fontSize: 14)),
       ],
@@ -389,7 +389,7 @@ class AnalysisContent extends StatelessWidget {
           children: [
             Icon(Icons.show_chart,
                 color: colorScheme.primary.withOpacity(0.5), size: 48),
-            Text("[ CHART LOADING... ]",
+            CyberGlitchText("[ CHART LOADING... ]",
                 style: GoogleFonts.vt323(
                     color: colorScheme.onSurfaceVariant, fontSize: 18)),
           ],

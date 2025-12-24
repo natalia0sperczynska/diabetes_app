@@ -1,4 +1,6 @@
+import 'package:diabetes_app/ui/widgets/glitch.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/theme_view_model.dart';
 import 'color_themes_tab.dart';
@@ -54,7 +56,8 @@ class _SettingsScreenState extends State<SettingsScreen>
     Scaffold(
       backgroundColor: Colors.transparent,
     appBar: AppBar(
-    title: const Text("Settings"),
+
+    title: CyberGlitchText("Settings",style: GoogleFonts.vt323(fontSize: 32, color:Theme.of(context).colorScheme.onPrimary),),
     bottom: TabBar(
     controller: _tabController,
     tabs: _tabs,
