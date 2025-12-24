@@ -1,4 +1,5 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
+import 'package:diabetes_app/ui/widgets/crt_overlay.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
@@ -48,6 +49,14 @@ class MyApp extends StatelessWidget {
       theme: themeViewModel.lightThemeData,
       darkTheme: themeViewModel.darkThemeData,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const CrtOverlay(),
+          ],
+        );
+      },
       home: const IntroductionScreen(),
       //home: const HomeScreen(),
     );
