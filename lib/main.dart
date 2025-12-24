@@ -1,5 +1,5 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
-import 'package:diabetes_app/ui/widgets/crt_overlay.dart';
+import 'package:diabetes_app/ui/widgets/vibe/crt_overlay.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';

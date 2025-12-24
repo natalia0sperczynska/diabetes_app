@@ -1,5 +1,5 @@
 import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
-import 'package:diabetes_app/ui/widgets/glitch.dart';
+import 'package:diabetes_app/ui/widgets/vibe/glitch.dart';
 import 'package:diabetes_app/ui/widgets/snack_bars/awesome_snack_bar.dart';
 import 'package:diabetes_app/services/dexcom_service.dart';
 import 'package:google_fonts/google_fonts.dart';

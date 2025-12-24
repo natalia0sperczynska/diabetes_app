@@ -1,5 +1,5 @@
 import 'package:diabetes_app/ui/view_models/analysis_view_model.dart';
-import 'package:diabetes_app/ui/widgets/glitch.dart';
+import 'package:diabetes_app/ui/widgets/vibe/glitch.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';

@@ -3,7 +3,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:health/health.dart';
 import '../../view_models/health_connect_view_model.dart';
-import '../../widgets/glitch.dart';
+import '../../widgets/vibe/glitch.dart';
 
 class HealthScreen extends StatefulWidget {
   const HealthScreen({super.key});

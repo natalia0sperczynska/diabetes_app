@@ -1,12 +1,12 @@
 import 'package:diabetes_app/ui/screens/statistics/statistics_screen.dart';
-import 'package:diabetes_app/ui/widgets/glitch.dart';
+import 'package:diabetes_app/ui/widgets/vibe/glitch.dart';
 import 'package:flutter/material.dart' hide BottomNavigationBar;
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../themes/colors/app_colors.dart';
 import '../../view_models/home_view_model.dart';
-import '../../widgets/drawer.dart';
-import '../../widgets/bottom_navigation.dart';
+import '../../widgets/navigation/drawer.dart';
+import '../../widgets/navigation/bottom_navigation.dart';
 import '../meals/calculator_screen.dart';
 import '../meals/diet_screen.dart';
 import '../health/health_screen.dart';
