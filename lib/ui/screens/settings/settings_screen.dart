@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/theme_view_model.dart';
 import 'color_themes_tab.dart';
+import 'dexcom_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -10,7 +11,8 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
+class _SettingsScreenState extends State<SettingsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final List<Tab> _tabs = const [
@@ -55,12 +57,27 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
                 onChanged: (value) {
                   themeViewModel.toggleTheme();
                 },
-                secondary: Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
+                secondary:
+                    Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.monitor_heart),
+                title: const Text('Dexcom Connection'),
+                subtitle: const Text('Configure Dexcom login credentials'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DexcomSettingsScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
 
-          // Color Themes tab content - placeholder to be replaced by new widget
           const ColorThemesTab(),
         ],
       ),
