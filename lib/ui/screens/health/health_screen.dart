@@ -15,7 +15,23 @@ class _HealthScreenState extends State<HealthScreen> {
   Widget build(BuildContext context) {
     final viewModel = context.watch<HealthConnectViewModel>();
 
-    return Scaffold(
+    return Stack(
+        children: [
+    Container(
+    color: Theme.of(context).scaffoldBackgroundColor
+    ),
+
+    Positioned.fill(
+    child: Opacity(
+    opacity: 0.15,
+    child: Image.asset(
+    'assets/images/grid.png',
+    repeat: ImageRepeat.repeat,
+    scale: 1.0,
+    ),
+    ),
+    ),Scaffold(
+      backgroundColor: Colors.transparent,
       appBar: AppBar(title: const Text("Health Connect")),
       body: SafeArea(
         child: Column(
@@ -89,6 +105,8 @@ class _HealthScreenState extends State<HealthScreen> {
             child: const Icon(Icons.refresh),
           )
         : null,
+    ),
+    ],
     );
   }
 

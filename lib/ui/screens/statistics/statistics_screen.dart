@@ -12,7 +12,24 @@ class StatsScreen extends StatelessWidget {
     final date = viewModel.selectedDate;
     final dateStr = "${date.day}/${date.month}/${date.year}";
 
-    return Scaffold(
+    return Stack(
+        children: [
+    Container(
+    color: Theme.of(context).scaffoldBackgroundColor
+    ),
+
+    Positioned.fill(
+    child: Opacity(
+    opacity: 0.15,
+    child: Image.asset(
+    'assets/images/grid.png',
+    repeat: ImageRepeat.repeat,
+    scale: 1.0,
+    ),
+    ),
+    ),
+    Scaffold(
+      backgroundColor: Colors.transparent,
       body: SafeArea(
         child: Column(
           children: [
@@ -63,6 +80,8 @@ class StatsScreen extends StatelessWidget {
         },
         child: const Icon(Icons.refresh),
       ),
+    ),
+    ],
     );
   }
 }

@@ -133,8 +133,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.darkBlue2,
+    return Stack(
+        children: [
+    Container(
+    color: Theme.of(context).scaffoldBackgroundColor
+    ),
+
+    Positioned.fill(
+    child: Opacity(
+    opacity: 0.15,
+    child: Image.asset(
+    'assets/images/grid.png',
+    repeat: ImageRepeat.repeat,
+    scale: 1.0,
+    ),
+    ),
+    ), Scaffold(
+    backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: const Text('Profile'),
         backgroundColor: AppColors.darkBlue1,
@@ -443,6 +458,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
             ),
+          ),
+    ],
     );
   }
 }

@@ -10,7 +10,8 @@ class SettingsScreen extends StatefulWidget {
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProviderStateMixin {
+class _SettingsScreenState extends State<SettingsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
   final List<Tab> _tabs = const [
@@ -35,35 +36,53 @@ class _SettingsScreenState extends State<SettingsScreen> with SingleTickerProvid
     final themeViewModel = Provider.of<ThemeViewModel>(context);
     final isDarkMode = themeViewModel.themeMode == ThemeMode.dark;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Settings"),
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: _tabs,
-        ),
-      ),
-      body: TabBarView(
-        controller: _tabController,
+    return Stack(
         children: [
-          // General tab content
-          ListView(
-            children: [
-              SwitchListTile(
-                title: const Text('Dark Mode'),
-                value: isDarkMode,
-                onChanged: (value) {
-                  themeViewModel.toggleTheme();
-                },
-                secondary: Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
-              ),
-            ],
-          ),
+    Container(
+    color: Theme.of(context).scaffoldBackgroundColor),
 
-          // Color Themes tab content - placeholder to be replaced by new widget
-          const ColorThemesTab(),
-        ],
-      ),
+    Positioned.fill(
+    child: Opacity(
+    opacity: 0.15,
+    child: Image.asset(
+    'assets/images/grid.png',
+    repeat: ImageRepeat.repeat,
+    scale: 1.0,
+    ),
+    ),
+    ),
+    Scaffold(
+      backgroundColor: Colors.transparent,
+    appBar: AppBar(
+    title: const Text("Settings"),
+    bottom: TabBar(
+    controller: _tabController,
+    tabs: _tabs,
+    ),
+    ),
+    body: TabBarView(
+    controller: _tabController,
+    children: [
+    // General tab content
+    ListView(
+    children: [
+    SwitchListTile(
+    title: const Text('Dark Mode'),
+    value: isDarkMode,
+    onChanged: (value) {
+    themeViewModel.toggleTheme();
+    },
+    secondary: Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
+    ),
+    ],
+    ),
+
+    // Color Themes tab content - placeholder to be replaced by new widget
+    const ColorThemesTab(),
+    ],
+    ),
+    ),
+    ],
     );
-  }
+    }
 }
