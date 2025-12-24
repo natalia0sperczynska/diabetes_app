@@ -5,6 +5,27 @@ import 'package:diabetes_app/data/charts/chart.dart';
 
 class StatsScreen extends StatelessWidget {
   const StatsScreen({super.key});
+  Future<void> _selectDate(BuildContext context, StatisticsViewModel viewModel) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: viewModel.selectedDate,
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: Theme.of(context).colorScheme,
+            dialogBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null && picked != viewModel.selectedDate) {
+      viewModel.updateSelectedDate(picked);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -42,9 +63,25 @@ class StatsScreen extends StatelessWidget {
                     icon: const Icon(Icons.arrow_back_ios),
                     onPressed: () => viewModel.previousDay(),
                   ),
-                  Text(
-                    dateStr,
-                    style: Theme.of(context).textTheme.titleLarge,
+                  InkWell(
+                    onTap: () => _selectDate(context, viewModel),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.calendar_month, size: 20),
+                          const SizedBox(width: 8),
+                          Text(
+                            dateStr,
+                            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              decoration: TextDecoration.underline,
+                              decorationStyle: TextDecorationStyle.dotted,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                   IconButton(
                     icon: const Icon(Icons.arrow_forward_ios),
