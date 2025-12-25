@@ -1,5 +1,6 @@
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_ai.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_best_day.dart';
+import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_clinical_benchmarks.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_glucose_trend.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_mertics.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_sensor_usage.dart';
@@ -80,6 +81,11 @@ class AnalysisContent extends StatelessWidget {
               const SizedBox(height: 16),
               const AnalysisGlucoseTrend(),
               const SizedBox(height: 24),
+              const AnalysisTitle(title: "CLINICAL BENCHMARKS"),
+              const SizedBox(height: 16),
+              const AnalysisBenchmarks(),
+              const SizedBox(height: 24),
+              const AnalysisTitle(title: "TEMPORAL ANOMALY SCAN"),
               const AnalysisTitle(title: "ACHIEVEMENTS"),
               BestDayWidget(bestDayText: vm.bestDayText),
               const SizedBox(height: 24),
