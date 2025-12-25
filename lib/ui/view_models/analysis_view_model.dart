@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-
+import 'package:intl/intl.dart';
 import '../../data/model/AnalysisModel.dart';
 import '../../data/model/DailyStats.dart';
 import '../../services/firebase_service.dart';
@@ -13,8 +13,9 @@ class AnalysisViewModel extends ChangeNotifier {
   final FirebaseService _firebaseService = FirebaseService();
   final String _currentTitle = "Analysis";
   String _aiAnalysisResult = "";
+  late String bestDay = bestDayText;
   bool _isAiLoading = false;
-
+  List<DailyStats> _cachedDailyData = [];
   bool _isLoading = false;
   int _daysToAnalyze = 14;
 
@@ -32,45 +33,62 @@ class AnalysisViewModel extends ChangeNotifier {
 
   bool get isAiLoading => _isAiLoading;
 
+  List<DailyStats> get cachedDailyData => _cachedDailyData;
+
   Future<void> loadData() async {
     _isLoading = true;
     notifyListeners();
-
+    if (_cachedDailyData.isNotEmpty) {
+      _stats = AnalysisStats.fromDailyStatsList(_cachedDailyData);
+      notifyListeners();
+      _isLoading = false;
+      return;
+    }
     try {
       List<DailyStats> dailyData =
           await _firebaseService.getAnalysis(_daysToAnalyze);
 
       if (dailyData.isNotEmpty) {
         _stats = AnalysisStats.fromDailyStatsList(dailyData);
+        _updateCache(dailyData);
         log("Stats from firebase: ${dailyData.length} days ");
       } else {
         _stats = AnalysisStats.empty();
+        _cachedDailyData = [];
         log("No data from firebase");
       }
-      // _stats = const AnalysisStats(
-      //   averageGlucose: 154,
-      //   gmi: 6.9,
-      //   coefficientOfVariation: 32.5,
-      //   standardDeviation: 45,
-      //   sensorActivePercent: 96,
-      //   ranges: {
-      //     'veryHigh': 0.0,
-      //     'high': 5.0,
-      //     'inTarget': 80.0,
-      //     'low': 10.0,
-      //     'veryLow': 5.0,
-      //   },
-      // );
-      //funckja z firebase
     } catch (e) {
       log("Error fetching glucose data: $e");
+      if (_cachedDailyData.isNotEmpty) {
+        _stats = AnalysisStats.fromDailyStatsList(_cachedDailyData);
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> generateSmartAnalysis() async {
+  DailyStats? get bestDayStat {
+    if (_cachedDailyData.isEmpty) return null;
+
+    return _cachedDailyData.reduce((curr, next) {
+      final currTarget = curr.ranges['inTarget'] ?? 0;
+      final nextTarget = next.ranges['inTarget'] ?? 0;
+      return currTarget > nextTarget ? curr : next;
+    });
+  }
+
+  String get bestDayText {
+    final best = bestDayStat;
+    if (best == null) return "No data available";
+    final date = best.date.toDate();
+    final dateStr = DateFormat('MMMM d').format(date);
+    final score = best.ranges['inTarget']?.toInt() ?? 0;
+
+    return "Best Day: $dateStr ($score% in range)";
+  }
+
+  Future<void> generateAIAnalysis() async {
     if (_stats.averageGlucose == 0) {
       _aiAnalysisResult = "No enough data for analysis";
       notifyListeners();
@@ -82,6 +100,7 @@ class AnalysisViewModel extends ChangeNotifier {
     try {
       final model =
           FirebaseAI.googleAI().generativeModel(model: 'gemini-2.5-flash');
+      final trendData = _prepareTrendData();
 
       final promptText = '''
 You are a medical AI assistant in a Cyberpunk-themed diabetes management app. Your role is to support, not replace, healthcare professionals.
@@ -89,7 +108,11 @@ You are a medical AI assistant in a Cyberpunk-themed diabetes management app. Yo
 ANALYSIS REQUEST:
 Analyze the following patient glucose metrics from the last $_daysToAnalyze days.
 
-PATIENT METRICS:
+CONTEXT DATA:
+The following is the daily breakdown of the patient's glucose over the last $_daysToAnalyze days:
+$trendData
+
+PATIENT AGGREGATED METRICS:
 - Average Glucose: ${_stats.averageGlucose.toInt()} mg/dL
 - GMI: ${_stats.gmi}%
 - Glucose Variability (SD): ${_stats.standardDeviation.toInt()} mg/dL
@@ -98,12 +121,15 @@ PATIENT METRICS:
 - Time Below Range (<70 mg/dL): ${(_stats.ranges['low']! + _stats.ranges['veryLow']!).toInt()}%
 - Time Above Range (>180 mg/dL): ${(_stats.ranges['high']! + _stats.ranges['veryHigh']!).toInt()}%
 
+TASK:
+Analyze the provided metrics and the DAILY BREAKDOWN above to identify patterns (e.g., "Frequent drops on weekends", "Consistent night lows").
+
 STRICT OUTPUT FORMAT:
 1. Provide a comprehensive yet concise analysis in approximately 5 sentences.
 2. Sentence 1: Overall assessment of glucose control quality.
 3. Sentence 2: Comment on glycemic stability/variability (SD, CV).
 4. Sentence 3: Analyze Time in Range achievement.
-5. Sentence 4: Identify the most significant safety concern (hypo- or hyperglycemia).
+5. Sentence 4: Identify the most significant safety concern (hypo- or hyperglycemia) and trends, patterns if detected.
 6. Sentence 5: Provide ONE specific, actionable tip for improvement.
 7. Tone: Professional, clear, with subtle futuristic undertones. Avoid alarmist language.
 8. Language: Plain English only, no markdown.
@@ -122,4 +148,31 @@ CRITICAL REMINDER: This analysis is for informational support only. It is not me
       notifyListeners();
     }
   }
+
+  String _prepareTrendData() {
+    if (_cachedDailyData.isEmpty) return "No daily breakdown available.";
+
+    StringBuffer buffer = StringBuffer();
+    buffer.writeln("DAILY BREAKDOWN (Last ${_cachedDailyData.length} days):");
+
+    for (var day in _cachedDailyData) {
+      final date = day.date.toDate().toString().split(' ')[0];
+      final low = (day.ranges['low']! + day.ranges['veryLow']!).toInt();
+      final high = (day.ranges['high']! + day.ranges['veryHigh']!).toInt();
+
+      buffer.writeln(
+          "- $date: Avg: ${day.averageGlucose.toInt()}, Lows: $low%, Highs: $high%");
+    }
+    return buffer.toString();
+  }
+
+  void _updateCache(List<DailyStats> newData) {
+    const maxCachedDays = 30;
+    if (newData.length > maxCachedDays) {
+      _cachedDailyData = newData.sublist(0, maxCachedDays);
+    } else {
+      _cachedDailyData = newData;
+    }
+  }
+
 }
