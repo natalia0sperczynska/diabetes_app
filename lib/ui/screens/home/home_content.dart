@@ -27,10 +27,7 @@ class _HomeContentState extends State<HomeContent> {
     });
 
     try {
-      final result = await DexcomService.getCurrentGlucose(
-        username: 'anniefocused@gmail.com', // USERNAME ANI
-        password: '',
-      );
+      final result = await DexcomService.getCurrentGlucoseWithCredentials();
 
       if (result['success']) {
         setState(() {

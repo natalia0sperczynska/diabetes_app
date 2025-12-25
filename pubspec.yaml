@@ -35,6 +35,9 @@ dependencies:
   health: ^13.2.0
   permission_handler: ^11.3.1
   intl: ^0.20.2
+  
+  # Secure Storage for Dexcom credentials
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:

@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/theme_view_model.dart';
 import 'color_themes_tab.dart';
+import 'dexcom_settings_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -40,52 +41,39 @@ class _SettingsScreenState extends State<SettingsScreen>
 
     return Stack(
         children: [
-    Container(
-    color: Theme.of(context).scaffoldBackgroundColor),
+          // General tab content
+          ListView(
+            children: [
+              SwitchListTile(
+                title: const Text('Dark Mode'),
+                value: isDarkMode,
+                onChanged: (value) {
+                  themeViewModel.toggleTheme();
+                },
+                secondary:
+                    Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
+              ),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.monitor_heart),
+                title: const Text('Dexcom Connection'),
+                subtitle: const Text('Configure Dexcom login credentials'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const DexcomSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
 
-    Positioned.fill(
-    child: Opacity(
-    opacity: 0.15,
-    child: Image.asset(
-    'assets/images/grid.png',
-    repeat: ImageRepeat.repeat,
-    scale: 1.0,
-    ),
-    ),
-    ),
-    Scaffold(
-      backgroundColor: Colors.transparent,
-    appBar: AppBar(
-
-    title: CyberGlitchText("Settings",style: GoogleFonts.vt323(fontSize: 32, color:Theme.of(context).colorScheme.onPrimary),),
-    bottom: TabBar(
-    controller: _tabController,
-    tabs: _tabs,
-    ),
-    ),
-    body: TabBarView(
-    controller: _tabController,
-    children: [
-    // General tab content
-    ListView(
-    children: [
-    SwitchListTile(
-    title: const Text('Dark Mode'),
-    value: isDarkMode,
-    onChanged: (value) {
-    themeViewModel.toggleTheme();
-    },
-    secondary: Icon(isDarkMode ? Icons.nightlight_round : Icons.wb_sunny),
-    ),
-    ],
-    ),
-
-    // Color Themes tab content - placeholder to be replaced by new widget
-    const ColorThemesTab(),
-    ],
-    ),
-    ),
-    ],
+          const ColorThemesTab(),
+        ],
+      ),
     );
     }
 }
