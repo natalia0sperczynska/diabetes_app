@@ -1,4 +1,5 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
+import 'package:diabetes_app/ui/widgets/vibe/crt_overlay.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
@@ -43,11 +44,19 @@ class MyApp extends StatelessWidget {
     final themeViewModel = Provider.of<ThemeViewModel>(context);
 
     return MaterialApp(
-      title: 'Diabetes App',
+      title: 'Diabeto',
       themeMode: themeViewModel.themeMode,
       theme: themeViewModel.lightThemeData,
       darkTheme: themeViewModel.darkThemeData,
       debugShowCheckedModeBanner: false,
+      builder: (context, child) {
+        return Stack(
+          children: [
+            if (child != null) child,
+            const CrtOverlay(),
+          ],
+        );
+      },
       home: const IntroductionScreen(),
       //home: const HomeScreen(),
     );

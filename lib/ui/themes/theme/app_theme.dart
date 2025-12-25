@@ -599,4 +599,89 @@ class AppTheme {
       drawerTheme: DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundLight),
     );
   }
+  // Wewnątrz klasy AppTheme:
+
+  static ThemeData get cyberpunkTheme {
+    return ThemeData(
+      useMaterial3: true,
+      textTheme: GoogleFonts.icelandTextTheme(ThemeData.dark().textTheme).apply(
+        bodyColor: AppColors.neonCyan,
+        displayColor: Colors.white,
+      ),
+
+      colorScheme: const ColorScheme(
+        brightness: Brightness.dark,
+        primary: AppColors.neonPink,
+        onPrimary: Colors.black,
+        secondary: AppColors.neonCyan,
+        onSecondary: Colors.black,
+        tertiary: AppColors.neonGreen,
+
+        surface: AppColors.cyberDarkBlue,
+        onSurface: AppColors.neonCyan,
+        background: AppColors.cyberBlack,
+        onBackground: AppColors.neonCyan,
+
+        surfaceContainer: AppColors.cyberBlack,
+
+        error: Colors.redAccent,
+        onError: Colors.white,
+      ),
+
+      scaffoldBackgroundColor: AppColors.cyberBlack,
+
+      appBarTheme: AppBarTheme(
+        backgroundColor: AppColors.cyberBlack,
+        foregroundColor: AppColors.neonPink,
+        elevation: 0,
+        centerTitle: true,
+        titleTextStyle: GoogleFonts.iceland(
+          fontSize: 32,
+          fontWeight: FontWeight.bold,
+          color: AppColors.neonPink,
+          letterSpacing: 2.0,
+        ),
+        iconTheme: const IconThemeData(color: AppColors.neonCyan),
+      ),
+
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: AppColors.cyberDarkBlue,
+        scrimColor: Colors.transparent,
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.cyberDarkBlue,
+          foregroundColor: AppColors.neonPink,
+          elevation: 10,
+          shadowColor: AppColors.neonPink,
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          textStyle: GoogleFonts.iceland(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.5
+          ),
+          shape: BeveledRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: AppColors.neonPink, width: 2), // Neonowa ramka
+          ),
+        ),
+      ),
+
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.cyberDarkBlue,
+        enabledBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: AppColors.neonCyan, width: 2),
+          borderRadius: BorderRadius.zero,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: AppColors.neonPink, width: 3),
+          borderRadius: BorderRadius.zero,
+        ),
+        labelStyle: GoogleFonts.iceland(color: AppColors.neonGreen, fontSize: 18),
+        hintStyle: GoogleFonts.iceland(color: AppColors.neonCyan.withOpacity(0.5)),
+      ),
+    );
+  }
 }

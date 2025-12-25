@@ -114,6 +114,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  Hero(tag: 'logo', child: Icon(Icons.favorite, size: 80, color: AppColors.mainBlue,),),
+                  const SizedBox(height: 16),
                   Text(
                     'Create Account',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(

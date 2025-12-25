@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../screens/analysis/analysis_screen.dart';
-import '../screens/health/health_screen.dart';
-import '../screens/profile/profile_screen.dart';
-import '../screens/settings/settings_screen.dart';
-import '../view_models/home_view_model.dart';
-import '../view_models/auth_view_model.dart';
+import '../../screens/analysis/analysis_screen.dart';
+import '../../screens/health/health_screen.dart';
+import '../../screens/profile/profile_screen.dart';
+import '../../screens/settings/settings_screen.dart';
+import '../../view_models/home_view_model.dart';
+import '../../view_models/auth_view_model.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -88,7 +88,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.person),
+            leading: const Hero(tag: 'profile', child: Icon(Icons.person),),
             title: const Text('Profile'),
             selected: false,
             onTap: () {

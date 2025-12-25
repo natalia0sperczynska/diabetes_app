@@ -44,6 +44,13 @@ class ColorThemesTab extends StatelessWidget {
       AppColors.oceanBlueSurfaceLight,
       AppColors.oceanBlueBackgroundLight,
     ],
+    'cyberPunk':[
+      AppColors.cyberBlack,
+      AppColors.cyberDarkBlue,
+      AppColors.neonPink,
+      AppColors.neonCyan,
+      AppColors.neonGreen,
+    ]
   };
 
   @override
@@ -106,6 +113,8 @@ class ColorThemesTab extends StatelessWidget {
         return 'Deep Purple';
       case 'oceanBlue':
         return 'Ocean Blue';
+        case 'cyberPunk':
+        return 'Cyber Punk';
       default:
         return key;
     }

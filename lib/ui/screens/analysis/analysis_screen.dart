@@ -14,9 +14,9 @@ class AnalysisScreen extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => AnalysisViewModel()..loadData(),
       child: Scaffold(
-        backgroundColor: AppColors.darkBlue2,
         appBar: AppBar(
-          backgroundColor: AppColors.darkBlue1,
+
+          backgroundColor: Theme.of(context).colorScheme.primary,
           title: Consumer<AnalysisViewModel>(
             builder: (context, vm, _) => Text(vm.currentTitle),
           ),
