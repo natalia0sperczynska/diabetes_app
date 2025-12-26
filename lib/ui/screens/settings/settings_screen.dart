@@ -1,6 +1,4 @@
-import 'package:diabetes_app/ui/widgets/vibe/glitch.dart';
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../view_models/theme_view_model.dart';
 import 'color_themes_tab.dart';
@@ -39,7 +37,16 @@ class _SettingsScreenState extends State<SettingsScreen>
     final themeViewModel = Provider.of<ThemeViewModel>(context);
     final isDarkMode = themeViewModel.themeMode == ThemeMode.dark;
 
-    return Stack(
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Settings"),
+        bottom: TabBar(
+          controller: _tabController,
+          tabs: _tabs,
+        ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
         children: [
           // General tab content
           ListView(
@@ -75,5 +82,5 @@ class _SettingsScreenState extends State<SettingsScreen>
         ],
       ),
     );
-    }
+  }
 }
