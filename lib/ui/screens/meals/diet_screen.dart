@@ -53,22 +53,11 @@ class _DietScreenState extends State<DietScreen> {
     'Snacks': [],
   };
 
-  int get caloriesConsumed => dailyMeals.values
-      .expand((l) => l)
-      .fold(0, (sum, meal) => sum + meal.calories);
+  int get caloriesConsumed => dailyMeals.values.expand((l) => l).fold(0, (sum, meal) => sum + meal.calories);
+  double get proteinConsumed => dailyMeals.values.expand((l) => l).fold(0.0, (sum, meal) => sum + meal.protein);
+  double get fatConsumed => dailyMeals.values.expand((l) => l).fold(0.0, (sum, meal) => sum + meal.fat);
+  double get carbConsumed => dailyMeals.values.expand((l) => l).fold(0.0, (sum, meal) => sum + meal.carbs);
 
-  double get proteinConsumed => dailyMeals.values
-      .expand((l) => l)
-      .fold(0.0, (sum, meal) => sum + meal.protein);
-
-  double get fatConsumed => dailyMeals.values
-      .expand((l) => l)
-      .fold(0.0, (sum, meal) => sum + meal.fat);
-
-  double get carbConsumed => dailyMeals.values
-      .expand((l) => l)
-      .fold(0.0, (sum, meal) => sum + meal.carbs);
-  
   Future<void> _onAddMealTap(String sectionKey) async {
     final Meal? newMeal = await Navigator.push(
       context,
@@ -121,6 +110,7 @@ class _DietScreenState extends State<DietScreen> {
           salt: scale(meal.salt),
           grams: newGrams,
           glycemicIndex: meal.glycemicIndex,
+          imageUrl: meal.imageUrl,
         );
 
         dailyMeals[sectionKey]![index] = newMeal;
@@ -207,20 +197,11 @@ class _DietScreenState extends State<DietScreen> {
           const SizedBox(height: 16),
           Row(
             children: [
-              Expanded(
-                child: _buildMacroBar(
-                    'Carbs', carbConsumed, carbGoal, carbsColor),
-              ),
+              Expanded(child: _buildMacroBar('Carbs', carbConsumed, carbGoal, carbsColor)),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildMacroBar(
-                    'Protein', proteinConsumed, proteinGoal, proteinColor),
-              ),
+              Expanded(child: _buildMacroBar('Protein', proteinConsumed, proteinGoal, proteinColor)),
               const SizedBox(width: 16),
-              Expanded(
-                child: _buildMacroBar(
-                    'Fat', fatConsumed, fatGoal, fatColor),
-              ),
+              Expanded(child: _buildMacroBar('Fat', fatConsumed, fatGoal, fatColor)),
             ],
           ),
         ],
@@ -233,49 +214,21 @@ class _DietScreenState extends State<DietScreen> {
     if (dailyCalorieGoal > 0) {
       progress = (caloriesConsumed / dailyCalorieGoal).clamp(0.0, 1.0);
     }
-
     return Stack(
       alignment: Alignment.center,
       children: [
         SizedBox(
           width: 130,
           height: 130,
-          child: CircularProgressIndicator(
-            value: progress,
-            strokeWidth: 10,
-            color: color,
-            backgroundColor: const Color(0xFFEEEEEE),
-            strokeCap: StrokeCap.round,
-          ),
+          child: CircularProgressIndicator(value: progress, strokeWidth: 10, color: color, backgroundColor: const Color(0xFFEEEEEE), strokeCap: StrokeCap.round),
         ),
         Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '$caloriesConsumed',
-              style: TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.w900,
-                color: color,
-              ),
-            ),
-            const Text(
-              'kcal',
-              style: TextStyle(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14
-              ),
-            ),
+            Text('$caloriesConsumed', style: TextStyle(fontSize: 30, fontWeight: FontWeight.w900, color: color)),
+            const Text('kcal', style: TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, fontSize: 14)),
             const SizedBox(height: 4),
-            Text(
-              '$remaining left',
-              style: TextStyle(
-                  color: Colors.grey[600],
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12
-              ),
-            ),
+            Text('$remaining left', style: TextStyle(color: Colors.grey[600], fontWeight: FontWeight.w500, fontSize: 12)),
           ],
         ),
       ],
@@ -283,58 +236,12 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   Widget _buildCalorieColumn(String label, int value, Color color) {
-    return Column(
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-              color: Colors.black54,
-              fontWeight: FontWeight.bold,
-              fontSize: 13
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '$value',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
+    return Column(children: [Text(label, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.bold, fontSize: 13)), const SizedBox(height: 4), Text('$value', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: color))]);
   }
 
-  Widget _buildMacroBar(
-      String label, double value, int goal, Color color) {
+  Widget _buildMacroBar(String label, double value, int goal, Color color) {
     final progress = (value / goal).clamp(0.0, 1.0);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(label,
-                style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87
-                )),
-            Text('${value.toInt()}/${goal}g',
-                style: const TextStyle(fontSize: 11, color: Colors.black54)),
-          ],
-        ),
-        const SizedBox(height: 6),
-        LinearProgressIndicator(
-          value: progress,
-          backgroundColor: color.withOpacity(0.15),
-          color: color,
-          minHeight: 8,
-          borderRadius: BorderRadius.circular(4),
-        ),
-      ],
-    );
+    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [Text(label, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black87)), Text('${value.toInt()}/${goal}g', style: const TextStyle(fontSize: 11, color: Colors.black54))]), const SizedBox(height: 6), LinearProgressIndicator(value: progress, backgroundColor: color.withOpacity(0.15), color: color, minHeight: 8, borderRadius: BorderRadius.circular(4))]);
   }
 
   Widget _buildMealSection(String sectionKey) {
@@ -351,23 +258,9 @@ class _DietScreenState extends State<DietScreen> {
             children: [
               Row(
                 children: [
-                  Text(
-                    sectionKey,
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: primaryBlue,
-                    ),
-                  ),
+                  Text(sectionKey, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryBlue)),
                   const SizedBox(width: 12),
-                  Text(
-                    '$sectionCalories kcal',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.grey,
-                        fontSize: 14
-                    ),
-                  ),
+                  Text('$sectionCalories kcal', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.grey, fontSize: 14)),
                 ],
               ),
               Material(
@@ -387,10 +280,7 @@ class _DietScreenState extends State<DietScreen> {
         if (meals.isEmpty)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-            child: Text(
-              'Add food',
-              style: TextStyle(color: primaryBlue.withOpacity(0.4), fontSize: 13, fontStyle: FontStyle.italic),
-            ),
+            child: Text('Add food', style: TextStyle(color: primaryBlue.withOpacity(0.4), fontSize: 13, fontStyle: FontStyle.italic)),
           )
         else
           ListView.builder(
@@ -408,14 +298,7 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   Widget _buildMealTile(String sectionKey, Meal meal, int index) {
-    Color giColor = Colors.grey;
-    if (meal.glycemicIndex != null) {
-      if (meal.glycemicIndex! < 55) giColor = Colors.green;
-      else if (meal.glycemicIndex! < 70) giColor = Colors.orange;
-      else giColor = Colors.red;
-    }
-
-    Color glColor = Colors.grey;
+    Color? glColor;
     if (meal.glycemicIndex != null) {
       final gl = meal.glycemicLoad;
       if (gl <= 10) glColor = Colors.green;
@@ -433,20 +316,25 @@ class _DietScreenState extends State<DietScreen> {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         onTap: () => _onMealTap(sectionKey, index),
         leading: Container(
-          padding: const EdgeInsets.all(8),
+          width: 50,
+          height: 50,
           decoration: BoxDecoration(
             color: primaryBlue.withOpacity(0.1),
-            shape: BoxShape.circle,
+            borderRadius: BorderRadius.circular(10),
+            image: (meal.imageUrl != null)
+                ? DecorationImage(
+              image: NetworkImage(meal.imageUrl!),
+              fit: BoxFit.cover,
+            )
+                : null,
           ),
-          child: Icon(Icons.restaurant, color: primaryBlue, size: 18),
+          child: (meal.imageUrl == null)
+              ? Icon(Icons.restaurant, color: primaryBlue, size: 24)
+              : null,
         ),
         title: Text(
           meal.name,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 15,
-            color: carbsColor,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: carbsColor),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
@@ -459,57 +347,42 @@ class _DietScreenState extends State<DietScreen> {
               style: const TextStyle(color: Colors.black54, fontSize: 12),
             ),
             const SizedBox(height: 6),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  _buildInfoBadge(
-                    label: '${meal.carbUnits.toStringAsFixed(1)} Units',
-                    color: diabeticColor,
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: diabeticColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: diabeticColor.withOpacity(0.3)),
                   ),
-                  const SizedBox(width: 8),
-
-                  if (meal.glycemicIndex != null) ...[
-                    _buildInfoBadge(
-                      label: 'GI: ${meal.glycemicIndex!.toInt()}',
-                      color: giColor,
+                  child: Text(
+                    '${meal.carbUnits.toStringAsFixed(1)} Units',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: diabeticColor),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (meal.glycemicIndex != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: glColor!.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: glColor.withOpacity(0.3)),
                     ),
-                    const SizedBox(width: 8),
-                  ],
-
-                  if (meal.glycemicIndex != null)
-                    _buildInfoBadge(
-                      label: 'GL: ${meal.glycemicLoad.toStringAsFixed(1)}',
-                      color: glColor,
+                    child: Text(
+                      'GL: ${meal.glycemicLoad.toStringAsFixed(1)}',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: glColor),
                     ),
-                ],
-              ),
+                  ),
+              ],
             )
           ],
         ),
         trailing: Text(
           '${meal.calories}',
-          style: TextStyle(
-            fontWeight: FontWeight.w900,
-            fontSize: 16,
-            color: primaryBlue,
-          ),
+          style: TextStyle(fontWeight: FontWeight.w900, fontSize: 16, color: primaryBlue),
         ),
-      ),
-    );
-  }
-
-  Widget _buildInfoBadge({required String label, required Color color}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
       ),
     );
   }

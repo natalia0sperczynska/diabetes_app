@@ -95,76 +95,99 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
     return AlertDialog(
       title: Text(widget.meal.name),
       backgroundColor: Colors.white,
+      contentPadding: EdgeInsets.zero,
       content: SingleChildScrollView(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextFormField(
-                controller: _gramsController,
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: _validateGrams,
-                decoration: const InputDecoration(
-                  labelText: 'Grams',
-                  suffixText: 'g',
-                  border: OutlineInputBorder(),
-                ),
-                onChanged: (_) => setState(() {}),
-              ),
-              const SizedBox(height: 20),
-
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (widget.meal.imageUrl != null)
               Container(
-                padding: const EdgeInsets.all(12),
+                width: double.infinity,
+                height: 120,
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.05),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  image: DecorationImage(
+                    image: NetworkImage(widget.meal.imageUrl!),
+                    fit: BoxFit.cover,
+                  ),
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+              ),
+
+            Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Column(
-                      children: [
-                        Text('Carb Units', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                        Text(
-                          currentUnits.toStringAsFixed(1),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepOrange),
-                        ),
-                      ],
+                    TextFormField(
+                      controller: _gramsController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      validator: _validateGrams,
+                      decoration: const InputDecoration(
+                        labelText: 'Grams',
+                        suffixText: 'g',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (_) => setState(() {}),
                     ),
-                    Column(
-                      children: [
-                        Text('Glycemic Load', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                        if (currentGL != null)
-                          Text(
-                            currentGL.toStringAsFixed(1),
-                            style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _getGLColor(currentGL)
-                            ),
-                          )
-                        else
-                          const Text('-', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
-                      ],
+                    const SizedBox(height: 20),
+
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.orange.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.orange.withOpacity(0.2)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Column(
+                            children: [
+                              Text('Carb Units', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                              Text(
+                                currentUnits.toStringAsFixed(1),
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text('Glycemic Load', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                              if (currentGL != null)
+                                Text(
+                                  currentGL.toStringAsFixed(1),
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: _getGLColor(currentGL)
+                                  ),
+                                )
+                              else
+                                const Text('-', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 20),
+
+                    const Text('Nutritional Values:', style: TextStyle(fontWeight: FontWeight.bold)),
+                    const Divider(),
+                    _buildRow('Calories', '${(_baseKcal * factor).round()} kcal'),
+                    _buildRow('Protein', '${(_baseProtein * factor).toStringAsFixed(1)} g'),
+                    _buildRow('Fat', '${(_baseFat * factor).toStringAsFixed(1)} g'),
+                    _buildRow('Carbs', '${(_baseCarbs * factor).toStringAsFixed(1)} g'),
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-
-              const Text('Nutritional Values:', style: TextStyle(fontWeight: FontWeight.bold)),
-              const Divider(),
-              _buildRow('Calories', '${(_baseKcal * factor).round()} kcal'),
-              _buildRow('Protein', '${(_baseProtein * factor).toStringAsFixed(1)} g'),
-              _buildRow('Fat', '${(_baseFat * factor).toStringAsFixed(1)} g'),
-              _buildRow('Carbs', '${(_baseCarbs * factor).toStringAsFixed(1)} g'),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
+      actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context, 'delete'),

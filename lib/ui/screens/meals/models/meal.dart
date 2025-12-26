@@ -9,6 +9,7 @@ class Meal {
   final double salt;
   final int grams;
   final double? glycemicIndex;
+  final String? imageUrl;
 
   Meal({
     required this.name,
@@ -21,6 +22,7 @@ class Meal {
     required this.salt,
     required this.grams,
     this.glycemicIndex,
+    this.imageUrl,
   });
 
   // Carb Unit (WW/BE) = 10g Carbs
