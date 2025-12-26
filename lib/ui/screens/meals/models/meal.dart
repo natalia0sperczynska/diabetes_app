@@ -23,5 +23,12 @@ class Meal {
     this.glycemicIndex,
   });
 
+  // Carb Unit (WW/BE) = 10g Carbs
   double get carbUnits => carbs / 10.0;
+
+  // Glycemic Load = (GI * Carbs in portion) / 100
+  double get glycemicLoad {
+    if (glycemicIndex == null) return 0.0;
+    return (glycemicIndex! * carbs) / 100.0;
+  }
 }

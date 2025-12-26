@@ -68,7 +68,7 @@ class _DietScreenState extends State<DietScreen> {
   double get carbConsumed => dailyMeals.values
       .expand((l) => l)
       .fold(0.0, (sum, meal) => sum + meal.carbs);
-
+  
   Future<void> _onAddMealTap(String sectionKey) async {
     final Meal? newMeal = await Navigator.push(
       context,
@@ -408,11 +408,19 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   Widget _buildMealTile(String sectionKey, Meal meal, int index) {
-    Color? giColor;
+    Color giColor = Colors.grey;
     if (meal.glycemicIndex != null) {
       if (meal.glycemicIndex! < 55) giColor = Colors.green;
       else if (meal.glycemicIndex! < 70) giColor = Colors.orange;
       else giColor = Colors.red;
+    }
+
+    Color glColor = Colors.grey;
+    if (meal.glycemicIndex != null) {
+      final gl = meal.glycemicLoad;
+      if (gl <= 10) glColor = Colors.green;
+      else if (gl <= 19) glColor = Colors.orange;
+      else glColor = Colors.red;
     }
 
     return Container(
@@ -451,35 +459,31 @@ class _DietScreenState extends State<DietScreen> {
               style: const TextStyle(color: Colors.black54, fontSize: 12),
             ),
             const SizedBox(height: 6),
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                  decoration: BoxDecoration(
-                    color: diabeticColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: diabeticColor.withOpacity(0.3)),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  _buildInfoBadge(
+                    label: '${meal.carbUnits.toStringAsFixed(1)} Units',
+                    color: diabeticColor,
                   ),
-                  child: Text(
-                    '${meal.carbUnits.toStringAsFixed(1)} Units',
-                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: diabeticColor),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                if (meal.glycemicIndex != null)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: giColor!.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(color: giColor.withOpacity(0.3)),
+                  const SizedBox(width: 8),
+
+                  if (meal.glycemicIndex != null) ...[
+                    _buildInfoBadge(
+                      label: 'GI: ${meal.glycemicIndex!.toInt()}',
+                      color: giColor,
                     ),
-                    child: Text(
-                      'GI: ${meal.glycemicIndex!.toInt()}',
-                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: giColor),
+                    const SizedBox(width: 8),
+                  ],
+
+                  if (meal.glycemicIndex != null)
+                    _buildInfoBadge(
+                      label: 'GL: ${meal.glycemicLoad.toStringAsFixed(1)}',
+                      color: glColor,
                     ),
-                  ),
-              ],
+                ],
+              ),
             )
           ],
         ),
@@ -491,6 +495,21 @@ class _DietScreenState extends State<DietScreen> {
             color: primaryBlue,
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildInfoBadge({required String label, required Color color}) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
       ),
     );
   }

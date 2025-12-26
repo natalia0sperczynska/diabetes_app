@@ -91,7 +91,6 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     if (!mounted) return;
 
     double? gi;
-
     if (id.startsWith('local_')) {
       final nutriments = (product['nutriments'] as Map<String, dynamic>?) ?? {};
       if (nutriments.containsKey('glycemic-index')) {
@@ -246,21 +245,32 @@ class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _gramsController;
 
+  double _currentGrams = 100.0;
+
   @override
   void initState() {
     super.initState();
     _gramsController = TextEditingController(text: '100');
+    _gramsController.addListener(_updateCalculations);
   }
 
   @override
   void dispose() {
+    _gramsController.removeListener(_updateCalculations);
     _gramsController.dispose();
     super.dispose();
   }
 
-  Color _getGIColor(double gi) {
-    if (gi < 55) return Colors.green;
-    if (gi < 70) return Colors.orange;
+  void _updateCalculations() {
+    final val = double.tryParse(_gramsController.text.replaceAll(',', '.'));
+    setState(() {
+      _currentGrams = val ?? 0.0;
+    });
+  }
+
+  Color _getGLColor(double gl) {
+    if (gl <= 10) return Colors.green;
+    if (gl <= 19) return Colors.orange;
     return Colors.red;
   }
 
@@ -272,11 +282,15 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
     final nutriments = (widget.product['nutriments'] as Map<String, dynamic>?) ?? {};
     final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
-    final cu100 = carbs100 / 10.0;
 
-    final giColor = widget.initialGI != null
-        ? _getGIColor(widget.initialGI!)
-        : Colors.grey;
+    final factor = _currentGrams / 100.0;
+    final currentCarbs = carbs100 * factor;
+    final currentUnits = currentCarbs / 10.0;
+
+    double? currentGL;
+    if (widget.initialGI != null) {
+      currentGL = (widget.initialGI! * currentCarbs) / 100.0;
+    }
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -288,47 +302,53 @@ class _AddProductDialogState extends State<AddProductDialog> {
           const SizedBox(height: 4),
           Text(name, style: const TextStyle(fontSize: 18, color: Colors.black)),
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.orange.withOpacity(0.5)),
+
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: Colors.orange.withOpacity(0.05),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.orange.withOpacity(0.2)),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                Column(
+                  children: [
+                    Text('Carb Units', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                    Text(
+                      currentUnits.toStringAsFixed(1),
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepOrange),
+                    ),
+                  ],
                 ),
-                child: Text(
-                  '${cu100.toStringAsFixed(1)} Units / 100g',
-                  style: TextStyle(fontSize: 12, color: Colors.orange[800], fontWeight: FontWeight.bold),
+                Column(
+                  children: [
+                    Text('Glycemic Load', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                    if (currentGL != null)
+                      Text(
+                        currentGL.toStringAsFixed(1),
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: _getGLColor(currentGL)
+                        ),
+                      )
+                    else
+                      const Text('-', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              if (widget.initialGI != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: giColor.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: giColor.withOpacity(0.5)),
-                  ),
-                  child: Text(
-                    'GI: ${widget.initialGI!.toInt()}',
-                    style: TextStyle(fontSize: 12, color: giColor, fontWeight: FontWeight.bold),
-                  ),
-                )
-              else
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'GI: -',
-                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
-                  ),
+                Column(
+                  children: [
+                    Text('GI Index', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
+                    Text(
+                      widget.initialGI != null ? widget.initialGI!.toInt().toString() : '-',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
+                    ),
+                  ],
                 ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
