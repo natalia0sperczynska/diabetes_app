@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import 'models/meal.dart';
 import 'services/open_food_facts_service.dart';
-import 'services/local_food_service.dart'; // Import local service
+import 'services/local_food_service.dart';
 import 'utils/nutrition_parser.dart';
 import 'utils/glycemic_index_store.dart';
 import 'widgets/barcode_scanner_dialog.dart';
@@ -90,13 +90,13 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
     if (!mounted) return;
 
-    final nutriments = (product['nutriments'] as Map<String, dynamic>?) ?? {};
     double? gi;
 
-    if (nutriments.containsKey('glycemic-index')) {
-      gi = toDoubleSafe(nutriments['glycemic-index']);
-    } else if (product.containsKey('glycemic_index')) {
-      gi = toDoubleSafe(product['glycemic_index']);
+    if (id.startsWith('local_')) {
+      final nutriments = (product['nutriments'] as Map<String, dynamic>?) ?? {};
+      if (nutriments.containsKey('glycemic-index')) {
+        gi = toDoubleSafe(nutriments['glycemic-index']);
+      }
     }
 
     if (gi == null) {
@@ -245,22 +245,23 @@ class AddProductDialog extends StatefulWidget {
 class _AddProductDialogState extends State<AddProductDialog> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _gramsController;
-  late TextEditingController _giController;
 
   @override
   void initState() {
     super.initState();
     _gramsController = TextEditingController(text: '100');
-    _giController = TextEditingController(
-        text: widget.initialGI != null ? widget.initialGI!.toInt().toString() : ''
-    );
   }
 
   @override
   void dispose() {
     _gramsController.dispose();
-    _giController.dispose();
     super.dispose();
+  }
+
+  Color _getGIColor(double gi) {
+    if (gi < 55) return Colors.green;
+    if (gi < 70) return Colors.orange;
+    return Colors.red;
   }
 
   @override
@@ -271,6 +272,11 @@ class _AddProductDialogState extends State<AddProductDialog> {
 
     final nutriments = (widget.product['nutriments'] as Map<String, dynamic>?) ?? {};
     final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
+    final cu100 = carbs100 / 10.0;
+
+    final giColor = widget.initialGI != null
+        ? _getGIColor(widget.initialGI!)
+        : Colors.grey;
 
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -281,18 +287,48 @@ class _AddProductDialogState extends State<AddProductDialog> {
           Text('Add to ${widget.mealType}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
           Text(name, style: const TextStyle(fontSize: 18, color: Colors.black)),
-          const SizedBox(height: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.orange.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: Colors.orange.withOpacity(0.5)),
-            ),
-            child: Text(
-              '${(carbs100/10).toStringAsFixed(1)} Carb Units / 100g',
-              style: TextStyle(fontSize: 12, color: Colors.orange[800], fontWeight: FontWeight.bold),
-            ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                ),
+                child: Text(
+                  '${cu100.toStringAsFixed(1)} Units / 100g',
+                  style: TextStyle(fontSize: 12, color: Colors.orange[800], fontWeight: FontWeight.bold),
+                ),
+              ),
+              const SizedBox(width: 8),
+              if (widget.initialGI != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: giColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: giColor.withOpacity(0.5)),
+                  ),
+                  child: Text(
+                    'GI: ${widget.initialGI!.toInt()}',
+                    style: TextStyle(fontSize: 12, color: giColor, fontWeight: FontWeight.bold),
+                  ),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'GI: -',
+                    style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.bold),
+                  ),
+                ),
+            ],
           ),
         ],
       ),
@@ -320,20 +356,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
-
-              TextFormField(
-                controller: _giController,
-                keyboardType: TextInputType.number,
-                style: const TextStyle(color: Colors.black),
-                decoration: InputDecoration(
-                  labelText: 'Glycemic Index (GI)',
-                  helperText: 'Est. based on name (optional)',
-                  prefixIcon: const Icon(Icons.speed, color: Colors.grey),
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-              ),
-
               const SizedBox(height: 12),
               TextButton(
                 onPressed: () {
@@ -359,8 +381,6 @@ class _AddProductDialogState extends State<AddProductDialog> {
           onPressed: () {
             if (_formKey.currentState!.validate()) {
               final grams = double.parse(_gramsController.text.replaceAll(',', '.'));
-              final giText = _giController.text.trim();
-              final gi = giText.isNotEmpty ? double.tryParse(giText) : null;
 
               final nutriments = (widget.product['nutriments'] as Map<String, dynamic>?) ?? {};
 
@@ -384,7 +404,7 @@ class _AddProductDialogState extends State<AddProductDialog> {
                 sugars: sugars100 * factor,
                 salt: salt100 * factor,
                 grams: grams.round(),
-                glycemicIndex: gi,
+                glycemicIndex: widget.initialGI,
               );
 
               Navigator.pop(context, meal);

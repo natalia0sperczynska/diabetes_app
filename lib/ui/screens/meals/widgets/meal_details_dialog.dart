@@ -123,7 +123,9 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
                   children: [
                     _buildRow('Carb Units', '${currentUnits.toStringAsFixed(1)} CU', isHighlight: true),
                     if (widget.meal.glycemicIndex != null)
-                      _buildRow('Glycemic Index', '${widget.meal.glycemicIndex!.toInt()}', isHighlight: true),
+                      _buildRow('Glycemic Index', '${widget.meal.glycemicIndex!.toInt()}', isHighlight: true)
+                    else
+                      _buildRow('Glycemic Index', '-', isHighlight: true),
                   ],
                 ),
               ),
