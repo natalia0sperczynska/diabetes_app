@@ -44,6 +44,7 @@ class _DietScreenState extends State<DietScreen> {
   final Color proteinColor = Colors.blueAccent;
   final Color fatColor = Colors.amber;
   final Color primaryBlue = const Color(0xFF1565C0);
+  final Color diabeticColor = Colors.deepOrange;
 
   final Map<String, List<Meal>> dailyMeals = {
     'Breakfast': [],
@@ -67,7 +68,6 @@ class _DietScreenState extends State<DietScreen> {
   double get carbConsumed => dailyMeals.values
       .expand((l) => l)
       .fold(0.0, (sum, meal) => sum + meal.carbs);
-
 
   Future<void> _onAddMealTap(String sectionKey) async {
     final Meal? newMeal = await Navigator.push(
@@ -120,6 +120,7 @@ class _DietScreenState extends State<DietScreen> {
           sugars: scale(meal.sugars),
           salt: scale(meal.salt),
           grams: newGrams,
+          glycemicIndex: meal.glycemicIndex,
         );
 
         dailyMeals[sectionKey]![index] = newMeal;
@@ -407,6 +408,13 @@ class _DietScreenState extends State<DietScreen> {
   }
 
   Widget _buildMealTile(String sectionKey, Meal meal, int index) {
+    Color? giColor;
+    if (meal.glycemicIndex != null) {
+      if (meal.glycemicIndex! < 55) giColor = Colors.green;
+      else if (meal.glycemicIndex! < 70) giColor = Colors.orange;
+      else giColor = Colors.red;
+    }
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       decoration: BoxDecoration(
@@ -414,7 +422,7 @@ class _DietScreenState extends State<DietScreen> {
         borderRadius: BorderRadius.circular(12),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         onTap: () => _onMealTap(sectionKey, index),
         leading: Container(
           padding: const EdgeInsets.all(8),
@@ -434,9 +442,46 @@ class _DietScreenState extends State<DietScreen> {
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
         ),
-        subtitle: Text(
-          '${meal.grams} g • P:${meal.protein.toInt()} F:${meal.fat.toInt()} C:${meal.carbs.toInt()}',
-          style: const TextStyle(color: Colors.black54, fontSize: 12),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              '${meal.grams} g • P:${meal.protein.toInt()} F:${meal.fat.toInt()} C:${meal.carbs.toInt()}',
+              style: const TextStyle(color: Colors.black54, fontSize: 12),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: diabeticColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: diabeticColor.withOpacity(0.3)),
+                  ),
+                  child: Text(
+                    '${meal.carbUnits.toStringAsFixed(1)} Units',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: diabeticColor),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                if (meal.glycemicIndex != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: giColor!.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: giColor.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      'GI: ${meal.glycemicIndex!.toInt()}',
+                      style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: giColor),
+                    ),
+                  ),
+              ],
+            )
+          ],
         ),
         trailing: Text(
           '${meal.calories}',

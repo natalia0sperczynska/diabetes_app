@@ -44,14 +44,21 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
     super.dispose();
   }
 
-  Widget _buildRow(String label, String value) {
+  Widget _buildRow(String label, String value, {bool isHighlight = false}) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(color: Colors.grey)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+          Text(label, style: TextStyle(
+              color: isHighlight ? Colors.black87 : Colors.grey[700],
+              fontWeight: isHighlight ? FontWeight.bold : FontWeight.normal
+          )),
+          Text(value, style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: isHighlight ? Colors.black : Colors.black87,
+              fontSize: isHighlight ? 15 : 14
+          )),
         ],
       ),
     );
@@ -78,8 +85,12 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
     final currentGrams = double.tryParse(currentText) ?? 0;
     final factor = currentGrams / 100.0;
 
+    final currentCarbs = _baseCarbs * factor;
+    final currentUnits = currentCarbs / 10.0;
+
     return AlertDialog(
       title: Text(widget.meal.name),
+      backgroundColor: Colors.white,
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
@@ -100,6 +111,24 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
                 onChanged: (_) => setState(() {}),
               ),
               const SizedBox(height: 20),
+
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                    color: Colors.orange[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.orange.withOpacity(0.3))
+                ),
+                child: Column(
+                  children: [
+                    _buildRow('Carb Units', '${currentUnits.toStringAsFixed(1)} CU', isHighlight: true),
+                    if (widget.meal.glycemicIndex != null)
+                      _buildRow('Glycemic Index', '${widget.meal.glycemicIndex!.toInt()}', isHighlight: true),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+
               const Text('Nutritional Values:',
                   style: TextStyle(fontWeight: FontWeight.bold)),
               const Divider(),
@@ -134,6 +163,7 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
               Navigator.pop(context, newGrams);
             }
           },
+          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1565C0), foregroundColor: Colors.white),
           child: const Text('Save'),
         ),
       ],

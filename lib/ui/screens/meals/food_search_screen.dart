@@ -100,6 +100,13 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     final sugars100 = toDoubleSafe(nutriments['sugars_100g']);
     final salt100 = toDoubleSafe(nutriments['salt_100g']);
 
+    double? gi;
+    if (nutriments.containsKey('glycemic-index')) {
+      gi = toDoubleSafe(nutriments['glycemic-index']);
+    } else if (product.containsKey('glycemic_index')) {
+      gi = toDoubleSafe(product['glycemic_index']);
+    }
+
     final factor = grams / 100.0;
 
     final meal = Meal(
@@ -112,6 +119,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
       sugars: sugars100 * factor,
       salt: salt100 * factor,
       grams: grams.round(),
+      glycemicIndex: gi,
     );
 
     if (mounted) {
@@ -249,6 +257,10 @@ class _AddProductDialogState extends State<AddProductDialog> {
         widget.product['generic_name'] ??
         'Unknown product';
 
+    // Extract quick carb info for preview
+    final nutriments = (widget.product['nutriments'] as Map<String, dynamic>?) ?? {};
+    final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
+
     return AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       backgroundColor: Colors.white,
@@ -258,6 +270,23 @@ class _AddProductDialogState extends State<AddProductDialog> {
           Text('Add to ${widget.mealType}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
           const SizedBox(height: 4),
           Text(name, style: const TextStyle(fontSize: 18, color: Colors.black)),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: Colors.orange.withOpacity(0.5)),
+                ),
+                child: Text(
+                  '${(carbs100/10).toStringAsFixed(1)} Units / 100g',
+                  style: TextStyle(fontSize: 12, color: Colors.orange[800], fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          )
         ],
       ),
       content: Form(

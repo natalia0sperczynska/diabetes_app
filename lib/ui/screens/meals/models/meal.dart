@@ -8,6 +8,7 @@ class Meal {
   final double sugars;
   final double salt;
   final int grams;
+  final double? glycemicIndex;
 
   Meal({
     required this.name,
@@ -19,5 +20,8 @@ class Meal {
     required this.sugars,
     required this.salt,
     required this.grams,
+    this.glycemicIndex,
   });
+
+  double get carbUnits => carbs / 10.0;
 }
