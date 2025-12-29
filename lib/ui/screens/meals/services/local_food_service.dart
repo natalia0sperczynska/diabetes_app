@@ -1,5 +1,5 @@
 class LocalFoodService {
-  // hardcoded list of basic foods with nutrition info and GI (kinda cheating but shhh)
+  // hardcoded list of basic foods with nutrition info and GI
   // GI values are based on averages (Harvard Health / Sydney University GI Database)
   static final List<Map<String, dynamic>> _localDatabase = [
     {
@@ -172,7 +172,7 @@ class LocalFoodService {
     }
   ];
 
-  static Future<List<Map<String, dynamic>>> search(String query) async {
+  static List<Map<String, dynamic>> searchLocal(String query) {
     if (query.isEmpty) return [];
 
     final lowerQuery = query.toLowerCase();

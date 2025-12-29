@@ -3,21 +3,25 @@ import 'package:diabetes_app/ui/widgets/vibe/crt_overlay.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'firebase_options.dart';
+import 'package:provider/provider.dart';
 import 'ui/view_models/home_view_model.dart';
 import 'ui/view_models/meal_view_model.dart';
 import 'ui/view_models/analysis_view_model.dart';
-import 'package:provider/provider.dart';
-
 import 'ui/view_models/theme_view_model.dart';
 import 'ui/view_models/statistics_view_model.dart';
 import 'ui/view_models/health_connect_view_model.dart';
 import 'ui/view_models/auth_view_model.dart';
 
+import 'ui/screens/meals/services/meal_repository.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  await MealRepository.init();
 
   runApp(
     MultiProvider(

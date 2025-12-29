@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:diabetes_app/ui/widgets/vibe/glitch.dart';
+import '../../themes/colors/app_colors.dart';
 
 import 'models/meal.dart';
 import 'services/open_food_facts_service.dart';
 import 'services/local_food_service.dart';
 import 'utils/nutrition_parser.dart';
-import 'utils/glycemic_index_store.dart';
 import 'widgets/barcode_scanner_dialog.dart';
 import 'product_details_screen.dart';
 
@@ -21,7 +23,6 @@ class FoodSearchScreen extends StatefulWidget {
 class _FoodSearchScreenState extends State<FoodSearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
-
   List<Map<String, dynamic>> _searchResults = [];
   bool _isLoading = false;
 
@@ -47,7 +48,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
     setState(() => _isLoading = true);
 
-    final localResults = await LocalFoodService.search(query);
+    final localResults = LocalFoodService.searchLocal(query);
 
     final apiResults = await OpenFoodFactsService.searchProducts(query);
 
@@ -59,439 +60,276 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
     });
   }
 
-  Future<void> _openBarcodeScanner() async {
-    final barcode = await showDialog<String>(
+  Future<void> _onScanBarcode() async {
+    await showDialog(
       context: context,
       builder: (_) => const BarcodeScannerDialog(),
-    );
+    ).then((val) async {
+      if (val is String && val.isNotEmpty) {
+        setState(() => _isLoading = true);
+        final product = await OpenFoodFactsService.fetchProduct(val);
+        setState(() => _isLoading = false);
 
-    if (barcode != null) {
-      _fetchAndShowAddDialog(barcode, isBarcode: true);
-    }
-  }
-
-  Future<void> _fetchAndShowAddDialog(String id, {bool isBarcode = false}) async {
-    Map<String, dynamic>? product;
-
-    if (id.startsWith('local_')) {
-      product = LocalFoodService.getProductByCode(id);
-    } else {
-      product = await OpenFoodFactsService.fetchProduct(id);
-    }
-
-    if (product == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Product details not found')),
-        );
+        if (product != null && mounted) {
+          _showQuantityDialog(product);
+        } else if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              backgroundColor: Theme.of(context).colorScheme.error,
+              content: Text("Product not found", style: GoogleFonts.vt323(fontSize: 18)),
+            ),
+          );
+        }
       }
-      return;
-    }
-
-    if (!mounted) return;
-
-    double? gi;
-    if (id.startsWith('local_')) {
-      final nutriments = (product['nutriments'] as Map<String, dynamic>?) ?? {};
-      if (nutriments.containsKey('glycemic-index')) {
-        gi = toDoubleSafe(nutriments['glycemic-index']);
-      }
-    }
-
-    if (gi == null) {
-      final name = product['product_name'] ?? product['generic_name'];
-      final categories = product['categories_tags'] as List<dynamic>?;
-      gi = GlycemicIndexStore.estimateGI(name, categories);
-    }
-
-    String? imageUrl;
-    if (product.containsKey('image_front_url')) {
-      imageUrl = product['image_front_url'];
-    } else if (product.containsKey('image_url')) {
-      imageUrl = product['image_url'];
-    }
-
-    final result = await showDialog<Meal>(
-      context: context,
-      builder: (_) => AddProductDialog(
-        product: product!,
-        mealType: widget.mealType,
-        initialGI: gi,
-        imageUrl: imageUrl,
-      ),
-    );
-
-    if (result == null) return;
-
-    if (mounted) {
-      Navigator.pop(context, result);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: const BackButton(color: Colors.black),
-        titleSpacing: 0,
-        title: Container(
-          height: 45,
-          margin: const EdgeInsets.only(right: 8),
-          child: TextField(
-            controller: _searchController,
-            onChanged: _onSearchChanged,
-            autofocus: true,
-            style: const TextStyle(color: Colors.black),
-            decoration: InputDecoration(
-              hintText: 'Search in ${widget.mealType}...',
-              hintStyle: TextStyle(color: Colors.grey[500]),
-              filled: true,
-              fillColor: Colors.grey[100],
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(25),
-                borderSide: BorderSide.none,
-              ),
-              suffixIcon: _isLoading
-                  ? const Padding(padding: EdgeInsets.all(10), child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.search, color: Colors.grey),
-            ),
-          ),
-        ),
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.qr_code_scanner, color: Colors.black),
-              onPressed: _openBarcodeScanner,
-            ),
-          )
-        ],
-      ),
-      body: _buildBody(),
-    );
-  }
-
-  Widget _buildBody() {
-    if (_searchController.text.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.search, size: 60, color: Colors.grey[300]),
-            const SizedBox(height: 16),
-            Text('Type to search or scan a barcode', style: TextStyle(color: Colors.grey[500])),
-          ],
-        ),
-      );
-    }
-
-    if (_searchResults.isEmpty && !_isLoading) {
-      return const Center(child: Text('No results found', style: TextStyle(color: Colors.black54)));
-    }
-
-    return ListView.separated(
-      padding: const EdgeInsets.all(16),
-      itemCount: _searchResults.length,
-      separatorBuilder: (_, __) => const Divider(),
-      itemBuilder: (context, index) {
-        final item = _searchResults[index];
-        final name = item['product_name'] ?? item['generic_name'] ?? 'Unknown';
-        final brand = item['brands'] ?? '';
-        final code = item['code'] ?? item['_id'] ?? '';
-
-        String? thumbUrl = item['image_front_small_url'] ?? item['image_small_url'] ?? item['image_url'];
-
-        final isLocal = code.toString().startsWith('local_');
-
-        return ListTile(
-          contentPadding: EdgeInsets.zero,
-          leading: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(8),
-              image: (thumbUrl != null && thumbUrl.isNotEmpty)
-                  ? DecorationImage(image: NetworkImage(thumbUrl), fit: BoxFit.cover)
-                  : null,
-            ),
-            child: (thumbUrl == null || thumbUrl.isEmpty)
-                ? Icon(Icons.restaurant, color: isLocal ? const Color(0xFF1565C0) : Colors.grey)
-                : null,
-          ),
-          title: Text(
-              name,
-              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black)
-          ),
-          subtitle: brand.isNotEmpty
-              ? Text(brand, style: TextStyle(color: Colors.grey[600]))
-              : (isLocal ? const Text('Basic Food', style: TextStyle(color: Colors.green)) : null),
-          trailing: const Icon(Icons.add_circle_outline, color: Color(0xFF1565C0)),
-          onTap: () {
-            if (code.isNotEmpty) {
-              _fetchAndShowAddDialog(code);
-            }
-          },
-        );
-      },
-    );
-  }
-}
-
-class AddProductDialog extends StatefulWidget {
-  final Map<String, dynamic> product;
-  final String mealType;
-  final double? initialGI;
-  final String? imageUrl;
-
-  const AddProductDialog({
-    required this.product,
-    required this.mealType,
-    this.initialGI,
-    this.imageUrl,
-    super.key
-  });
-
-  @override
-  State<AddProductDialog> createState() => _AddProductDialogState();
-}
-
-class _AddProductDialogState extends State<AddProductDialog> {
-  final _formKey = GlobalKey<FormState>();
-  late TextEditingController _gramsController;
-
-  double _currentGrams = 100.0;
-
-  @override
-  void initState() {
-    super.initState();
-    _gramsController = TextEditingController(text: '100');
-    _gramsController.addListener(_updateCalculations);
-  }
-
-  @override
-  void dispose() {
-    _gramsController.removeListener(_updateCalculations);
-    _gramsController.dispose();
-    super.dispose();
-  }
-
-  void _updateCalculations() {
-    final val = double.tryParse(_gramsController.text.replaceAll(',', '.'));
-    setState(() {
-      _currentGrams = val ?? 0.0;
     });
   }
 
-  Color _getGLColor(double gl) {
-    if (gl <= 10) return Colors.green;
-    if (gl <= 19) return Colors.orange;
-    return Colors.red;
+  void _showQuantityDialog(Map<String, dynamic> product) {
+    final name = product['product_name'] ?? 'Unknown';
+    final nutriments = product['nutriments'] ?? {};
+    final TextEditingController gramsController = TextEditingController(text: '100');
+    final colorScheme = Theme.of(context).colorScheme;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: ShapeDecoration(
+            color: colorScheme.surface.withOpacity(0.95),
+            shape: BeveledRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(color: AppColors.mainBlue, width: 2),
+            ),
+            shadows: [
+              BoxShadow(color: AppColors.mainBlue.withOpacity(0.4), blurRadius: 20)
+            ],
+          ),
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CyberGlitchText('ADD ENTRY', style: GoogleFonts.vt323(fontSize: 24, color: AppColors.mainBlue, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Text(name, textAlign: TextAlign.center, style: GoogleFonts.iceland(fontSize: 18, color: colorScheme.onSurface)),
+              const SizedBox(height: 24),
+
+              TextField(
+                controller: gramsController,
+                keyboardType: TextInputType.number,
+                style: GoogleFonts.vt323(fontSize: 24, color: AppColors.green),
+                textAlign: TextAlign.center,
+                decoration: InputDecoration(
+                  labelText: 'QUANTITY (g)',
+                  labelStyle: GoogleFonts.iceland(color: colorScheme.onSurfaceVariant),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: colorScheme.outline),
+                  ),
+                  focusedBorder: const OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.green, width: 2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text('CANCEL', style: GoogleFonts.vt323(fontSize: 18, color: Colors.grey)),
+                  ),
+
+                  InkWell(
+                    onTap: () {
+                      final grams = double.tryParse(gramsController.text) ?? 100.0;
+
+                      final kcal100 = toDoubleSafe(nutriments['energy-kcal_100g']);
+                      final p100 = toDoubleSafe(nutriments['proteins_100g']);
+                      final f100 = toDoubleSafe(nutriments['fat_100g']);
+                      final c100 = toDoubleSafe(nutriments['carbohydrates_100g']);
+                      final fiber100 = toDoubleSafe(nutriments['fiber_100g']);
+                      final sugar100 = toDoubleSafe(nutriments['sugars_100g']);
+                      final salt100 = toDoubleSafe(nutriments['salt_100g']);
+
+                      double? gi = toDoubleSafe(nutriments['glycemic-index']);
+                      if (gi == 0.0) gi = null;
+
+                      final factor = grams / 100.0;
+
+                      final meal = Meal(
+                        name: name,
+                        calories: (kcal100 * factor).round(),
+                        protein: p100 * factor,
+                        fat: f100 * factor,
+                        carbs: c100 * factor,
+                        fiber: fiber100 * factor,
+                        sugars: sugar100 * factor,
+                        salt: salt100 * factor,
+                        grams: grams.round(),
+                        glycemicIndex: gi,
+                        imageUrl: product['image_url'],
+                        mealType: widget.mealType,
+                      );
+
+                      Navigator.pop(ctx);
+                      Navigator.pop(context, meal);
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: AppColors.mainBlue.withOpacity(0.2),
+                        border: Border.all(color: AppColors.mainBlue),
+                      ),
+                      child: Text('CONFIRM', style: GoogleFonts.vt323(fontSize: 18, color: AppColors.mainBlue, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              )
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final name = widget.product['product_name'] ??
-        widget.product['generic_name'] ??
-        'Unknown product';
+    final colorScheme = Theme.of(context).colorScheme;
 
-    final nutriments = (widget.product['nutriments'] as Map<String, dynamic>?) ?? {};
-    final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
+    return Stack(
+      children: [
+        Container(color: Theme.of(context).scaffoldBackgroundColor),
+        Positioned.fill(
+          child: Opacity(
+            opacity: 0.1,
+            child: Image.asset('assets/images/grid.png', repeat: ImageRepeat.repeat, errorBuilder: (_,__,___) => Container()),
+          ),
+        ),
 
-    final factor = _currentGrams / 100.0;
-    final currentCarbs = carbs100 * factor;
-    final currentUnits = currentCarbs / 10.0;
-
-    double? currentGL;
-    if (widget.initialGI != null) {
-      currentGL = (widget.initialGI! * currentCarbs) / 100.0;
-    }
-
-    return AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      backgroundColor: Colors.white,
-      contentPadding: EdgeInsets.zero,
-      content: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (widget.imageUrl != null)
-              Container(
-                width: double.infinity,
-                height: 150,
-                decoration: BoxDecoration(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-                  image: DecorationImage(
-                    image: NetworkImage(widget.imageUrl!),
-                    fit: BoxFit.cover,
+        Scaffold(
+          backgroundColor: Colors.transparent,
+          appBar: AppBar(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            leading: const BackButton(),
+            title: CyberGlitchText('DATABASE SEARCH', style: GoogleFonts.vt323(fontSize: 26, fontWeight: FontWeight.bold, color: colorScheme.primary)),
+            centerTitle: true,
+          ),
+          body: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Container(
+                  decoration: ShapeDecoration(
+                    color: colorScheme.surface.withOpacity(0.8),
+                    shape: BeveledRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                      side: BorderSide(color: AppColors.mainBlue.withOpacity(0.6), width: 1),
+                    ),
+                    shadows: [BoxShadow(color: AppColors.mainBlue.withOpacity(0.1), blurRadius: 10)],
+                  ),
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    style: GoogleFonts.vt323(fontSize: 20, color: colorScheme.onSurface),
+                    decoration: InputDecoration(
+                      hintText: 'ENTER PRODUCT NAME...',
+                      hintStyle: GoogleFonts.vt323(color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
+                      prefixIcon: Icon(Icons.search, color: AppColors.mainBlue),
+                      suffixIcon: IconButton(
+                        icon: Icon(Icons.qr_code_scanner, color: AppColors.green),
+                        onPressed: _onScanBarcode,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
                   ),
                 ),
-              )
-            else
-              Container(
-                width: double.infinity,
-                height: 80,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFF5F5F5),
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-                ),
-                child: const Icon(Icons.restaurant, size: 40, color: Colors.grey),
               ),
 
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Add to ${widget.mealType}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    const SizedBox(height: 4),
-                    Text(name, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.black)),
-                    const SizedBox(height: 16),
-
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.withOpacity(0.05),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.orange.withOpacity(0.2)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
-                        children: [
-                          Column(
-                            children: [
-                              Text('Carb Units', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                              Text(
-                                currentUnits.toStringAsFixed(1),
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.deepOrange),
-                              ),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              Text('Glycemic Load', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                              if (currentGL != null)
-                                Text(
-                                  currentGL.toStringAsFixed(1),
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _getGLColor(currentGL)),
-                                )
-                              else
-                                const Text('-', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.grey)),
-                            ],
-                          ),
-                          Column(
-                            children: [
-                              Text('GI Index', style: TextStyle(fontSize: 10, color: Colors.grey[700])),
-                              Text(
-                                widget.initialGI != null ? widget.initialGI!.toInt().toString() : '-',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.black87),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    TextFormField(
-                      controller: _gramsController,
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      autofocus: true,
-                      style: const TextStyle(color: Colors.black, fontSize: 18),
-                      decoration: InputDecoration(
-                        labelText: 'Portion Size',
-                        suffixText: 'g',
-                        prefixIcon: const Icon(Icons.scale, color: Colors.grey),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) return 'Enter grams';
-                        final n = double.tryParse(value.replaceAll(',', '.'));
-                        if (n == null || n <= 0) return 'Invalid';
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    Center(
-                      child: TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ProductDetailsScreen(product: widget.product),
-                            ),
-                          );
-                        },
-                        child: const Text('View full nutrition info'),
-                      ),
-                    ),
-                  ],
+              Expanded(
+                child: _isLoading
+                    ? Center(child: CircularProgressIndicator(color: AppColors.mainBlue))
+                    : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemCount: _searchResults.length,
+                  itemBuilder: (context, index) {
+                    final product = _searchResults[index];
+                    return _buildResultTile(product);
+                  },
                 ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildResultTile(Map<String, dynamic> product) {
+    final name = product['product_name'] ?? 'Unknown';
+    final brand = product['brands'] ?? '';
+    final nutriments = product['nutriments'] ?? {};
+    final kcal = nutriments['energy-kcal_100g']?.toString() ?? '-';
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return GestureDetector(
+      onTap: () => _showQuantityDialog(product),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: colorScheme.surface.withOpacity(0.6),
+          border: Border(left: BorderSide(color: AppColors.mainBlue.withOpacity(0.5), width: 4)),
+        ),
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            Container(
+              width: 50, height: 50,
+              decoration: BoxDecoration(
+                color: Colors.black12,
+                border: Border.all(color: Colors.white10),
+              ),
+              child: product['image_url'] != null
+                  ? Image.network(product['image_url'], fit: BoxFit.cover, errorBuilder: (_,__,___) => Icon(Icons.fastfood, color: Colors.white24))
+                  : Icon(Icons.inventory_2, color: AppColors.mainBlue.withOpacity(0.7)),
+            ),
+            const SizedBox(width: 16),
+
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                      name.toUpperCase(),
+                      style: GoogleFonts.vt323(fontSize: 20, fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis
+                  ),
+                  if (brand.isNotEmpty)
+                    Text(brand, style: GoogleFonts.iceland(fontSize: 14, color: colorScheme.onSurfaceVariant)),
+                ],
               ),
             ),
+
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.pixelBorder.withOpacity(0.5)),
+                  borderRadius: BorderRadius.circular(4)
+              ),
+              child: Text(
+                  '$kcal KCAL',
+                  style: GoogleFonts.vt323(fontSize: 16, color: AppColors.pixelBorder, fontWeight: FontWeight.bold)
+              ),
+            ),
+
+            const SizedBox(width: 12),
+            Icon(Icons.add_circle_outline, color: AppColors.mainBlue),
           ],
         ),
       ),
-      actionsPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            if (_formKey.currentState!.validate()) {
-              final grams = double.parse(_gramsController.text.replaceAll(',', '.'));
-
-              final nutriments = (widget.product['nutriments'] as Map<String, dynamic>?) ?? {};
-              final kcal100 = toDoubleSafe(nutriments['energy-kcal_100g']);
-              final protein100 = toDoubleSafe(nutriments['proteins_100g']);
-              final fat100 = toDoubleSafe(nutriments['fat_100g']);
-              final carbs100 = toDoubleSafe(nutriments['carbohydrates_100g']);
-              final fiber100 = toDoubleSafe(nutriments['fiber_100g']);
-              final sugars100 = toDoubleSafe(nutriments['sugars_100g']);
-              final salt100 = toDoubleSafe(nutriments['salt_100g']);
-
-              final factor = grams / 100.0;
-
-              final meal = Meal(
-                name: name,
-                calories: (kcal100 * factor).round(),
-                protein: protein100 * factor,
-                fat: fat100 * factor,
-                carbs: carbs100 * factor,
-                fiber: fiber100 * factor,
-                sugars: sugars100 * factor,
-                salt: salt100 * factor,
-                grams: grams.round(),
-                glycemicIndex: widget.initialGI,
-                imageUrl: widget.imageUrl,
-              );
-
-              Navigator.pop(context, meal);
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            backgroundColor: const Color(0xFF1565C0),
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          ),
-          child: const Text('Add', style: TextStyle(fontSize: 16)),
-        ),
-      ],
     );
   }
 }
