@@ -1,11 +1,19 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class Chart extends StatefulWidget {
   final String title;
   final List<FlSpot> glucoseSpots;
 
-  const Chart({super.key, required this.title, required this.glucoseSpots});
+  final Function(FlSpot?)? onSpotHover;
+
+  const Chart({
+    super.key,
+    required this.title,
+    required this.glucoseSpots,
+    this.onSpotHover,
+  });
 
   @override
   State<Chart> createState() => _ChartState();
@@ -20,8 +28,7 @@ class _ChartState extends State<Chart> {
     return AspectRatio(
       aspectRatio: 1.5,
       child: Padding(
-        padding: const EdgeInsets.only(top: 18.0, right: 18.0,bottom: 18.0,
-          left: 0.0,),
+        padding: const EdgeInsets.all(18.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -32,30 +39,31 @@ class _ChartState extends State<Chart> {
                     quarterTurns: 1,
                     child: Slider(
                       value: baselineY,
-                      onChanged: (newValue) {
-                        setState(() {
-                          baselineY = newValue;
-                        });
-                      },
+                      onChanged: (newValue) => setState(() => baselineY = newValue),
                       min: 40,
                       max: 300,
+                      activeColor: Colors.blueGrey,
+                      inactiveColor: Colors.white10,
                     ),
                   ),
                   Expanded(
-                    child: _Chart(baselineX, baselineY, widget.glucoseSpots),
+                    child: _ChartGraph(
+                      baselineX: baselineX,
+                      baselineY: baselineY,
+                      glucoseSpots: widget.glucoseSpots,
+                      onSpotHover: widget.onSpotHover,
+                    ),
                   ),
                 ],
               ),
             ),
             Slider(
               value: baselineX,
-              onChanged: (newValue) {
-                setState(() {
-                  baselineX = newValue;
-                });
-              },
+              onChanged: (newValue) => setState(() => baselineX = newValue),
               min: 0,
               max: 24,
+              activeColor: Colors.blueGrey,
+              inactiveColor: Colors.white10,
             ),
           ],
         ),
@@ -64,140 +72,38 @@ class _ChartState extends State<Chart> {
   }
 }
 
-class _Chart extends StatelessWidget {
+class _ChartGraph extends StatelessWidget {
   final double baselineX;
   final double baselineY;
   final List<FlSpot> glucoseSpots;
+  final Function(FlSpot?)? onSpotHover;
 
-  const _Chart(this.baselineX, this.baselineY, this.glucoseSpots) : super();
+  const _ChartGraph({
+    required this.baselineX,
+    required this.baselineY,
+    required this.glucoseSpots,
+    this.onSpotHover,
+  });
 
-  Widget bottomTitleWidgets(double value, TitleMeta meta) {
-    if (value % 2 != 0) {
-      return const SizedBox.shrink();
-    }
-
-    final String timeText = "${value.toInt()}:00";
-
-    return SideTitleWidget(
-      meta: meta,
-      child: Text(
-        timeText,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 12,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget leftTitleWidgets(double value, TitleMeta meta) {
-    return SideTitleWidget(
-      meta: meta,
-      child: Text(
-        value.toInt().toString(),
-        style: const TextStyle(color: Colors.white70, fontSize: 10),
-      ),
-    );
-  }
   @override
   Widget build(BuildContext context) {
-    ThemeData theme = Theme.of(context);
     return LineChart(
       LineChartData(
-        lineBarsData: [
-          LineChartBarData(
-            spots: glucoseSpots,
-            isCurved: true,
-            barWidth: 4,
-            isStrokeCapRound: true,
-            color: theme.hintColor,
-            dotData: FlDotData(show: true),
-            belowBarData: BarAreaData(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [
-                  theme.primaryColor.withOpacity(0.8),
-                  theme.primaryColor.withOpacity(0.5),
-                  theme.primaryColor.withOpacity(0.3),
-                  theme.primaryColor.withOpacity(0.1),
-                ],
-              ),
-              show: true,
-            ),
+        lineTouchData: LineTouchData(
+          handleBuiltInTouches: true,
+          touchTooltipData: LineTouchTooltipData(
+            getTooltipColor: (spot) => Colors.transparent,
+            getTooltipItems: (spots) => spots.map((e) => null).toList(),
           ),
-        ],
-        rangeAnnotations: RangeAnnotations(
-          horizontalRangeAnnotations: [
-            HorizontalRangeAnnotation(
-              y1: 70,
-              y2: 180,
-              color: Colors.green.withOpacity(0.08),
-            ),
-          ],
-        ),
-        extraLinesData: ExtraLinesData(
-          horizontalLines: [
-            HorizontalLine(
-              y: baselineY,
-              color: Colors.white,
-              strokeWidth: 1,
-              dashArray: [5, 5],
-              label: HorizontalLineLabel(
-                show: true,
-                alignment: Alignment.topRight,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12
-                ),
-                labelResolver: (line) => "${line.y.toInt()}",
-              ),
-            ),
-          ],
-          verticalLines: [
-            VerticalLine(
-              x: baselineX,
-              color: Colors.white,
-              strokeWidth: 1,
-              dashArray: [5, 5],
-              label: VerticalLineLabel(
-                show: true,
-                alignment: Alignment.topRight,
-                style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12
-                ),
-                labelResolver: (line) {
-                  int h = line.x.toInt();
-                  int m = ((line.x - h) * 60).toInt();
-                  return "$h:${m.toString().padLeft(2, '0')}";
-                },
-              ),
-            ),
-          ],
-        ),
-        titlesData: FlTitlesData(
-          bottomTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: 1,
-              getTitlesWidget: bottomTitleWidgets,
-              reservedSize: 32,
-            ),
-          ),
-          leftTitles: AxisTitles(
-            sideTitles: SideTitles(
-              showTitles: true,
-              interval: 50,
-              getTitlesWidget: leftTitleWidgets,
-              reservedSize: 30,
-            ),
-          ),
-          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          touchCallback: (FlTouchEvent event, LineTouchResponse? touchResponse) {
+            if (event is FlPanEndEvent || event is FlTapUpEvent || event is FlLongPressEnd) {
+              onSpotHover?.call(null);
+            }
+            else if (touchResponse != null && touchResponse.lineBarSpots != null) {
+              final spot = touchResponse.lineBarSpots!.first;
+              onSpotHover?.call(spot);
+            }
+          },
         ),
 
         gridData: FlGridData(
@@ -205,23 +111,76 @@ class _Chart extends StatelessWidget {
           drawVerticalLine: true,
           verticalInterval: 1,
           horizontalInterval: 50,
-          getDrawingHorizontalLine: (value) => const FlLine(
-            color: Colors.white10,
-            strokeWidth: 1,
-          ),
+          getDrawingHorizontalLine: (value) => const FlLine(color: Colors.white10, strokeWidth: 1),
           getDrawingVerticalLine: (value) {
-            if (value % 6 == 0) {
-              return const FlLine(color: Colors.white24, strokeWidth: 1);
-            }
+            if (value % 6 == 0) return const FlLine(color: Colors.white24, strokeWidth: 1);
             return const FlLine(color: Colors.white10, strokeWidth: 0.5);
           },
         ),
-        minX: 0,
-        maxX: 24,
-        minY: 40,
-        maxY: 300,
+        titlesData: FlTitlesData(
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 4,
+              getTitlesWidget: (value, meta) {
+                return Text(
+                  value.toInt().toString(),
+                  style: GoogleFonts.vt323(color: Colors.white54, fontSize: 14),
+                );
+              },
+              reservedSize: 30,
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              interval: 50,
+              getTitlesWidget: (value, meta) {
+                if (value == 0) return const SizedBox.shrink();
+                return Text(
+                  value.toInt().toString(),
+                  style: GoogleFonts.vt323(color: Colors.white54, fontSize: 14),
+                );
+              },
+              reservedSize: 40,
+            ),
+          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+
+        minX: 0, maxX: 24, minY: 40, maxY: 300,
+        lineBarsData: [
+          LineChartBarData(
+            spots: glucoseSpots,
+            isCurved: true,
+            color: const Color(0xFF00E5FF),
+            barWidth: 3,
+            isStrokeCapRound: true,
+            dotData: const FlDotData(show: false),
+            belowBarData: BarAreaData(
+              show: true,
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF00E5FF).withOpacity(0.3),
+                  const Color(0xFF00E5FF).withOpacity(0.0),
+                ],
+              ),
+            ),
+          ),
+          LineChartBarData(
+            spots: [const FlSpot(0, 0), const FlSpot(24, 0)].map((e) => FlSpot(e.x, baselineY)).toList(),
+            isCurved: false,
+            color: Colors.white24,
+            barWidth: 1,
+            dashArray: [5, 5],
+            dotData: const FlDotData(show: false),
+          ),
+        ],
       ),
-      duration: Duration.zero,
     );
   }
 }
