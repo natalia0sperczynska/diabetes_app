@@ -110,6 +110,7 @@ class _StatsScreenState extends State<StatsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -117,15 +118,28 @@ class _StatsScreenState extends State<StatsScreen> {
                 Text(
                   currentValue.toInt().toString(),
                   style: GoogleFonts.vt323(
-                    fontSize: 58,
+                    fontSize: 64,
                     height: 0.9,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 8, left: 8),
-                  child: Icon(trendIcon, size: 40, color: statusColor),
+                const SizedBox(width: 10),
+
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(trendIcon, size: 38, color: statusColor),
+                    Text(
+                        "mg/dL",
+                        style: GoogleFonts.iceland(
+                            fontSize: 16,
+                            color: Colors.white54,
+                            fontWeight: FontWeight.bold
+                        )
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -133,31 +147,26 @@ class _StatsScreenState extends State<StatsScreen> {
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        isLive ? "LIVE" : "HIST: $timeStr",
-                        style: GoogleFonts.iceland(
-                            fontSize: 16,
-                            color: isLive ? Colors.redAccent : Colors.white54,
-                            fontWeight: FontWeight.bold
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text("mg/dL", style: GoogleFonts.iceland(fontSize: 16, color: Colors.white54)),
-                    ],
+                  Text(
+                    isLive ? "LIVE FEED" : "TIME: $timeStr",
+                    style: GoogleFonts.vt323(
+                      fontSize: 28,
+                      color: isLive ? Colors.redAccent : Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
                   ),
                   const SizedBox(height: 4),
+
                   Text(
                     statusText,
                     textAlign: TextAlign.end,
-                    style: GoogleFonts.vt323(
-                        fontSize: 18,
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1.2
+                    style: GoogleFonts.iceland(
+                      fontSize: 16,
+                      color: statusColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
@@ -295,7 +304,6 @@ class _StatsScreenState extends State<StatsScreen> {
                               ],
                             ),
                             const SizedBox(height: 10),
-
                             Expanded(
                               child: viewModel.isLoading
                                   ? const Center(child: CircularProgressIndicator())
