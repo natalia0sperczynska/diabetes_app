@@ -47,4 +47,5 @@ flutter {
 }
 dependencies {
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+    implementation("androidx.health.connect:connect-client:1.2.0-alpha02")
 }

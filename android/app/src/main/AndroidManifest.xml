@@ -1,40 +1,39 @@
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.diabetes_app">
 
-    <!-- Camera (barcode scanning) -->
-    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- If your code/plugin checks Health Connect install/availability, Android 11+ may require package visibility -->
+    <queries>
+        <!-- Health Connect controller permission flow -->
+        <intent>
+            <action android:name="android.health.connect.action.REQUEST_HEALTH_PERMISSIONS" />
+        </intent>
 
-    <!-- Health Connect READ permissions -->
+        <!-- Some devices check the Health Connect controller package -->
+        <package android:name="com.google.android.healthconnect.controller" />
+    </queries>
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Health Connect permissions (declare what you actually request in code) -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <!-- If you later request more, add them here, e.g.
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
-
-    <!-- Required for step data sources -->
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
+    <uses-permission android:name="android.permission.health.WRITE_BLOOD_GLUCOSE" />
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
+    -->
 
     <application
+        android:name="${applicationName}"
         android:label="diabetes_app"
-        android:icon="@mipmap/launcher_icon">
+        android:icon="@mipmap/ic_launcher">
 
-        <!-- Barcode Scanner -->
-        <activity
-            android:name="com.apptreesoftware.barcodescan.BarcodeScannerActivity"
-            android:exported="false" />
-
-        <activity
-            android:name="androidx.health.connect.client.permission.HealthPermissionActivity"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
-            </intent-filter>
-        </activity>
-
-        <!-- Main Flutter Activity -->
+        <!-- Flutter entry activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -44,26 +43,38 @@
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
 
-            <!-- Launcher -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
         </activity>
+
+        <!-- Health Connect: rationale screen (Health Connect launches this if user taps “Why/Privacy”) -->
+        <activity
+            android:name=".PermissionsRationaleActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- Health Connect (Android 14+): REQUIRED alias (this is the piece you were missing) -->
+        <activity-alias
+            android:name=".ViewPermissionUsageActivity"
+            android:exported="true"
+            android:targetActivity=".PermissionsRationaleActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE">
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
 
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
 
     </application>
-
-    <!-- Android 11+ package visibility -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT" />
-            <data android:mimeType="text/plain" />
-        </intent>
-    </queries>
-
 </manifest>
