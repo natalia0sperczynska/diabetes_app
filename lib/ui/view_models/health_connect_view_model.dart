@@ -7,172 +7,180 @@ import 'package:health/health.dart';
 class HealthConnectViewModel extends ChangeNotifier {
   final Health _health = Health();
 
-  // Native channel (Android only)
+  // Android native channel for Health Connect permissions
   static const MethodChannel _hcChannel =
   MethodChannel('health_connect_permissions');
 
-  List<HealthDataPoint> _healthDataList = [];
+  // ✅ STEPS ONLY
+  static const List<HealthDataType> _types = <HealthDataType>[
+    HealthDataType.STEPS,
+  ];
+
+  // ✅ STEPS ONLY
+  static const List<HealthDataAccess> _permissions = <HealthDataAccess>[
+    HealthDataAccess.READ,
+  ];
+
   bool _isAuthorized = false;
   bool _isLoading = false;
   int _steps = 0;
+  List<HealthDataPoint> _healthDataList = <HealthDataPoint>[];
 
-  List<HealthDataPoint> get healthDataList => _healthDataList;
   bool get isAuthorized => _isAuthorized;
   bool get isLoading => _isLoading;
   int get steps => _steps;
+  List<HealthDataPoint> get healthDataList => _healthDataList;
 
   bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
-  static const _types = <HealthDataType>[
-    HealthDataType.STEPS,
-    HealthDataType.HEART_RATE,
-    HealthDataType.BLOOD_GLUCOSE,
-  ];
-
-  static const _permissions = <HealthDataAccess>[
-    HealthDataAccess.READ,
-    HealthDataAccess.READ,
-    HealthDataAccess.READ,
-  ];
-
   HealthConnectViewModel() {
-    _logPlatform();
-  }
-
-  void _logPlatform() {
-    if (!_isAndroid) {
-      debugPrint('Health Connect not supported on this platform');
-    } else {
+    if (_isAndroid) {
       debugPrint('Android detected — using Health Connect');
+    } else {
+      debugPrint('Not Android — Health Connect not used');
     }
   }
 
-  /// Calls your Android native code to launch the Health Connect permission UI.
-  /// IMPORTANT: This will still fail/close instantly if your Manifest does NOT
-  /// declare the rationale activity + alias correctly.
+  /// ✅ This keeps your existing UI working:
+  /// health_screen.dart calls viewModel.authorize()
+  Future<void> authorize() async {
+    await initHealthConnect();
+  }
+
+  /// ✅ This keeps your existing UI working:
+  /// health_screen.dart calls viewModel.fetchData()
+  Future<void> fetchData() async {
+    await fetchStepsLast24h();
+  }
+
+  /// Native Health Connect permission request (Android permission UI).
   Future<bool> _requestNativeHealthConnectPermissions() async {
     if (!_isAndroid) return false;
 
     try {
       final granted = await _hcChannel.invokeMethod<bool>(
         'requestHealthConnectPermissions',
-        {
-          // Pass full Android permission strings (safe + explicit)
+        <String, dynamic>{
+          // ✅ STEPS ONLY
           'permissions': <String>[
             'android.permission.health.READ_STEPS',
-            'android.permission.health.READ_HEART_RATE',
-            'android.permission.health.READ_BLOOD_GLUCOSE',
           ],
         },
       );
 
-      debugPrint('Native Health Connect permissions granted = ${granted == true}');
-      return granted == true;
+      final ok = granted == true;
+      debugPrint('Native Health Connect permissions granted = $ok');
+      return ok;
     } on PlatformException catch (e) {
-      debugPrint('Native HC permission request failed: ${e.code} ${e.message}');
-      return false;
-    } catch (e) {
-      debugPrint('Native HC permission request failed: $e');
+      debugPrint('Native Health Connect permission error: $e');
       return false;
     }
   }
 
-  /// Call this from UI (button press or initState) to connect to Health Connect.
-  Future<void> authorize() async {
+  /// Initialize Health Connect permissions + optionally fetch data.
+  Future<void> initHealthConnect() async {
     if (!_isAndroid) return;
 
-    try {
-      // 1) Verify Health Connect is available (installed / supported)
-      final hcAvailable = await _health.isHealthConnectAvailable();
-      debugPrint('Health Connect available = $hcAvailable');
+    _isLoading = true;
+    notifyListeners();
 
-      if (hcAvailable != true) {
+    try {
+      final available = await _health.isHealthConnectAvailable();
+      debugPrint('Health Connect available = $available');
+
+      if (available != true) {
         _isAuthorized = false;
-        notifyListeners();
         return;
       }
 
-      // 2) Check current permission state via plugin
-      final hasPerms = await _health.hasPermissions(
+      // 1) Check permissions via plugin
+      bool hasPerms = (await _health.hasPermissions(
         _types,
         permissions: _permissions,
-      );
-
+      )) ==
+          true;
       debugPrint('Health Connect hasPermissions (plugin) = $hasPerms');
 
-      bool granted = hasPerms == true;
+      // 2) If missing -> native flow first
+      if (!hasPerms) {
+        await _requestNativeHealthConnectPermissions();
 
-      // 3) If missing, do a REAL native permission request first.
-      // This is the key step that makes your app appear inside Health Connect.
-      if (!granted) {
-        granted = await _requestNativeHealthConnectPermissions();
+        hasPerms = (await _health.hasPermissions(
+          _types,
+          permissions: _permissions,
+        )) ==
+            true;
 
-        // Re-check after native flow
-        final afterNative = await _health.hasPermissions(
+        debugPrint('Health Connect hasPermissions AFTER native = $hasPerms');
+      }
+
+      // 3) If still missing -> plugin requestAuthorization
+      if (!hasPerms) {
+        final pluginAuth = await _health.requestAuthorization(
           _types,
           permissions: _permissions,
         );
-        debugPrint('Health Connect hasPermissions AFTER native = $afterNative');
-        granted = granted && (afterNative == true);
+        debugPrint('Health Connect requestAuthorization (plugin) = $pluginAuth');
+
+        hasPerms = pluginAuth == true;
       }
 
-      // 4) Fallback: if native didn’t grant (or you didn’t implement it),
-      // try the plugin requestAuthorization (some setups work fine with only this).
-      if (!granted) {
-        final pluginGranted = await _health.requestAuthorization(
-          _types,
-          permissions: _permissions,
-        );
-        debugPrint('Health Connect requestAuthorization (plugin) = $pluginGranted');
-        granted = pluginGranted == true;
-      }
-
-      _isAuthorized = granted;
+      _isAuthorized = hasPerms;
 
       if (_isAuthorized) {
-        await fetchData();
-      } else {
-        debugPrint('Health Connect permissions not granted.');
+        await fetchStepsLast24h();
       }
     } catch (e, st) {
-      debugPrint('Authorization error: $e');
+      debugPrint('initHealthConnect error: $e');
       debugPrintStack(stackTrace: st);
       _isAuthorized = false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
     }
-
-    notifyListeners();
   }
 
-  /// Fetch health data (last 24h)
-  Future<void> fetchData() async {
-    if (!_isAndroid || !_isAuthorized) return;
+  /// Fetch steps for last 24 hours (Steps-only).
+  Future<void> fetchStepsLast24h() async {
+    if (!_isAuthorized) return;
 
     _isLoading = true;
     notifyListeners();
 
     final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
+    final start = now.subtract(const Duration(hours: 24));
 
     try {
-      final healthData = await _health.getHealthDataFromTypes(
-        startTime: yesterday,
+      // ✅ Your health package requires NAMED params (0 positional allowed)
+      final points = await _health.getHealthDataFromTypes(
+        startTime: start,
         endTime: now,
         types: _types,
       );
 
-      _healthDataList = _health.removeDuplicates(healthData);
+      _healthDataList = points;
 
-      final stepsCount = await _health.getTotalStepsInInterval(yesterday, now);
-      _steps = stepsCount ?? 0;
+      final total = await _health.getTotalStepsInInterval(start, now);
+      _steps = total ?? 0;
 
       debugPrint('Health data points: ${_healthDataList.length}');
       debugPrint('Steps (last 24h): $_steps');
     } catch (e, st) {
-      debugPrint('Fetch error: $e');
+      debugPrint('fetchStepsLast24h error: $e');
       debugPrintStack(stackTrace: st);
+      _healthDataList = <HealthDataPoint>[];
+      _steps = 0;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void reset() {
+    _isAuthorized = false;
+    _isLoading = false;
+    _steps = 0;
+    _healthDataList = <HealthDataPoint>[];
+    notifyListeners();
   }
 }

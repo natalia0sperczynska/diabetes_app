@@ -3,19 +3,18 @@ package com.example.diabetes_app
 import androidx.activity.ComponentActivity
 import androidx.activity.result.ActivityResultLauncher
 import androidx.health.connect.client.HealthConnectClient
+import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.PermissionController
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 
-class HealthConnectPermissions(private val activity: ComponentActivity) : MethodChannel.MethodCallHandler {
+class HealthConnectPermissions(
+    private val activity: ComponentActivity
+) : MethodChannel.MethodCallHandler {
 
     private val permissions = setOf(
         HealthPermission.getReadPermission(StepsRecord::class)
-        // Add more later if you want:
-        // HealthPermission.getReadPermission(HeartRateRecord::class),
-        // HealthPermission.getReadPermission(BloodGlucoseRecord::class),
     )
 
     private var pendingResult: MethodChannel.Result? = null

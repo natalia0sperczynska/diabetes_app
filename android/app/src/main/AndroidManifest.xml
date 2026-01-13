@@ -17,6 +17,8 @@
 
     <!-- Health Connect permissions (declare what you actually request in code) -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE_ROUTES" />
+
     <!-- If you later request more, add them here, e.g.
     <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
     <uses-permission android:name="android.permission.health.WRITE_BLOOD_GLUCOSE" />
