@@ -11,12 +11,10 @@ class HealthConnectViewModel extends ChangeNotifier {
   static const MethodChannel _hcChannel =
   MethodChannel('health_connect_permissions');
 
-  // ✅ STEPS ONLY
   static const List<HealthDataType> _types = <HealthDataType>[
     HealthDataType.STEPS,
   ];
 
-  // ✅ STEPS ONLY
   static const List<HealthDataAccess> _permissions = <HealthDataAccess>[
     HealthDataAccess.READ,
   ];
@@ -41,13 +39,11 @@ class HealthConnectViewModel extends ChangeNotifier {
     }
   }
 
-  /// ✅ This keeps your existing UI working:
   /// health_screen.dart calls viewModel.authorize()
   Future<void> authorize() async {
     await initHealthConnect();
   }
 
-  /// ✅ This keeps your existing UI working:
   /// health_screen.dart calls viewModel.fetchData()
   Future<void> fetchData() async {
     await fetchStepsLast24h();
@@ -61,7 +57,6 @@ class HealthConnectViewModel extends ChangeNotifier {
       final granted = await _hcChannel.invokeMethod<bool>(
         'requestHealthConnectPermissions',
         <String, dynamic>{
-          // ✅ STEPS ONLY
           'permissions': <String>[
             'android.permission.health.READ_STEPS',
           ],
@@ -151,7 +146,6 @@ class HealthConnectViewModel extends ChangeNotifier {
     final start = now.subtract(const Duration(hours: 24));
 
     try {
-      // ✅ Your health package requires NAMED params (0 positional allowed)
       final points = await _health.getHealthDataFromTypes(
         startTime: start,
         endTime: now,
