@@ -13,7 +13,6 @@ class FirebaseService {
   final String _aggregatesCollection = 'daily_aggregates';
 
   Future<List<DailyStats>> getAnalysis(int daysCount) async {
-    List<DailyStats> results = [];
     try {
       var latestDocQuery = await _firestore
           .collection('Glucose_measurements')

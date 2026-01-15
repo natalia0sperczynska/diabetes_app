@@ -22,6 +22,7 @@ class CyberGlitchText extends StatefulWidget {
 
 class _CyberGlitchTextState extends State<CyberGlitchText> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
+  // ignore: unused_field
   late Animation<double> _randomTrigger;
   Timer? _glitchTimer;
   final Random _random = Random();

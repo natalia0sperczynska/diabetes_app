@@ -2,7 +2,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter/material.dart' hide BottomNavigationBar;
 import '../../view_models/analysis_view_model.dart';
 import 'package:flutter/material.dart';
-import '../../themes/colors/app_colors.dart';
 import 'analysis_content.dart';
 
 //tylko kontener na dane, bez logiki

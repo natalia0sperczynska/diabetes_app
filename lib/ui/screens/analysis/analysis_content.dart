@@ -255,7 +255,6 @@ class AnalysisContent extends StatelessWidget {
 
   Widget _buildTimeInRangeChart(BuildContext context, double veryHigh,
       double high, double inRange, double low, double veryLow) {
-    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(24),
       child: Row(
@@ -357,7 +356,6 @@ class AnalysisContent extends StatelessWidget {
 
   Widget _buildLegendItem(
       BuildContext context, Color color, String label, double value) {
-    final textColor = Theme.of(context).colorScheme.onSurfaceVariant;
     return Row(
       children: [
         Container(

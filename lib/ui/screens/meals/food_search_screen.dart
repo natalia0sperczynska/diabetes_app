@@ -9,7 +9,6 @@ import 'services/open_food_facts_service.dart';
 import 'services/local_food_service.dart';
 import 'utils/nutrition_parser.dart';
 import 'widgets/barcode_scanner_dialog.dart';
-import 'product_details_screen.dart';
 
 class FoodSearchScreen extends StatefulWidget {
   final String mealType;

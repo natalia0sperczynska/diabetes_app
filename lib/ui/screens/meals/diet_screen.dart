@@ -342,7 +342,6 @@ class _DietScreenState extends State<DietScreen> {
 
   Widget _buildSectionList(String title, BuildContext context) {
     final meals = _getMealsByType(title);
-    final sectionCalories = meals.fold(0, (sum, m) => sum + m.calories);
     final colorScheme = Theme.of(context).colorScheme;
 
     return SliverList(

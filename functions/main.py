@@ -8,29 +8,10 @@ from firebase_admin import initialize_app, firestore
 import json
 import datetime
 import os
-import hashlib
-import requests
 
 initialize_app()
 set_global_options(max_instances=5)
 
-
-# ============= LibreLinkUp API Configuration =============
-LIBRE_LINK_UP_VERSION = "4.12.0"
-LIBRE_LINK_UP_PRODUCT = "llu.android"
-
-LIBRE_LINK_UP_REGIONS = {
-    "eu": "https://api-eu.libreview.io",
-    "eu2": "https://api-eu2.libreview.io",
-    "us": "https://api-us.libreview.io",
-    "de": "https://api-de.libreview.io",
-    "fr": "https://api-fr.libreview.io",
-    "jp": "https://api-jp.libreview.io",
-    "ap": "https://api-ap.libreview.io",
-    "au": "https://api-au.libreview.io",
-    "ae": "https://api-ae.libreview.io",
-    "global": "https://api.libreview.io",
-}
 
 LIBRE_TREND_ARROWS = {
     1: "falling_quickly",
@@ -39,75 +20,6 @@ LIBRE_TREND_ARROWS = {
     4: "rising",
     5: "rising_quickly",
 }
-
-
-def get_libre_headers(token: str = None, user_id: str = None) -> dict:
-    """Generate headers for LibreLinkUp API requests."""
-    headers = {
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Cache-Control": "no-cache",
-        "product": LIBRE_LINK_UP_PRODUCT,
-        "version": LIBRE_LINK_UP_VERSION,
-    }
-    if token:
-        headers["Authorization"] = f"Bearer {token}"
-    if user_id:
-        # Account-Id is SHA256 hash of user_id (required since v4.16+)
-        account_id = hashlib.sha256(user_id.encode("utf-8")).hexdigest()
-        headers["Account-Id"] = account_id
-    return headers
-
-
-def libre_login(email: str, password: str, region: str = "eu") -> dict:
-    """Login to LibreLinkUp API and get auth token."""
-    base_url = LIBRE_LINK_UP_REGIONS.get(region, LIBRE_LINK_UP_REGIONS["global"])
-    
-    response = requests.post(
-        f"{base_url}/llu/auth/login",
-        headers=get_libre_headers(),
-        json={"email": email, "password": password},
-        timeout=30,
-    )
-    
-    data = response.json()
-    
-    # Handle region redirect
-    if data.get("status") == 2 and data.get("data", {}).get("redirect"):
-        new_region = data["data"]["region"]
-        new_base_url = LIBRE_LINK_UP_REGIONS.get(new_region, f"https://api-{new_region}.libreview.io")
-        response = requests.post(
-            f"{new_base_url}/llu/auth/login",
-            headers=get_libre_headers(),
-            json={"email": email, "password": password},
-            timeout=30,
-        )
-        data = response.json()
-        data["_base_url"] = new_base_url
-    else:
-        data["_base_url"] = base_url
-    
-    return data
-
-
-def libre_get_connections(base_url: str, token: str, user_id: str) -> dict:
-    """Get patient connections from LibreLinkUp API."""
-    response = requests.get(
-        f"{base_url}/llu/connections",
-        headers=get_libre_headers(token, user_id),
-        timeout=30,
-    )
-    return response.json()
-
-
-def libre_get_graph_data(base_url: str, token: str, user_id: str, patient_id: str) -> dict:
-    """Get glucose graph data for a specific patient."""
-    response = requests.get(
-        f"{base_url}/llu/connections/{patient_id}/graph",
-        headers=get_libre_headers(token, user_id),
-        timeout=30,
-    )
-    return response.json()
 
 
 @https_fn.on_request()
@@ -306,7 +218,7 @@ def get_last_glucose_measurement(req: https_fn.Request) -> https_fn.Response:
 
 @https_fn.on_request()
 def get_libre_glucose(req: https_fn.Request) -> https_fn.Response:
-    """Get current glucose reading from LibreLinkUp API."""
+    """Get current glucose reading from LibreLinkUp API using pylibrelinkup."""
     headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -318,10 +230,11 @@ def get_libre_glucose(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response("", status=204, headers=headers)
 
     try:
+        from pylibrelinkup import PyLibreLinkUp, APIUrl, RedirectError
+
         data = req.get_json() if req.get_json() else {}
         email = data.get("email", "")
         password = data.get("password", "")
-        region = data.get("region", "eu")
 
         if not email or not password:
             return https_fn.Response(
@@ -330,75 +243,47 @@ def get_libre_glucose(req: https_fn.Request) -> https_fn.Response:
                 headers=headers,
             )
 
-        # Step 1: Login
-        login_response = libre_login(email, password, region)
+        api_url = APIUrl.EU
+        client = PyLibreLinkUp(email=email, password=password, api_url=api_url)
         
-        if login_response.get("status") != 0:
-            error_msg = login_response.get("error", {}).get("message", "Login failed")
-            return https_fn.Response(
-                json.dumps({"success": False, "error": error_msg}),
-                status=401,
-                headers=headers,
-            )
+        try:
+            client.authenticate()
+        except RedirectError as e:
+            client = PyLibreLinkUp(email=email, password=password, api_url=e.region)
+            client.authenticate()
 
-        auth_ticket = login_response.get("data", {}).get("authTicket", {})
-        token = auth_ticket.get("token")
-        user_id = login_response.get("data", {}).get("user", {}).get("id")
-        base_url = login_response.get("_base_url")
-
-        if not token or not user_id:
-            return https_fn.Response(
-                json.dumps({"success": False, "error": "Failed to get auth token"}),
-                status=401,
-                headers=headers,
-            )
-
-        # Step 2: Get connections
-        connections_response = libre_get_connections(base_url, token, user_id)
-        
-        if connections_response.get("status") != 0:
-            return https_fn.Response(
-                json.dumps({"success": False, "error": "Failed to get connections"}),
-                status=500,
-                headers=headers,
-            )
-
-        connections = connections_response.get("data", [])
-        if not connections:
+        patients = client.get_patients()
+        if not patients:
             return https_fn.Response(
                 json.dumps({"success": False, "error": "No patient connections found. Make sure LibreLinkUp sharing is set up."}),
                 status=404,
                 headers=headers,
             )
 
-        # Get the first connection's glucose data
-        connection = connections[0]
-        glucose_measurement = connection.get("glucoseMeasurement", {})
-        
-        if not glucose_measurement:
+        patient = patients[0]
+        latest = client.latest(patient_identifier=patient)
+
+        if not latest:
             return https_fn.Response(
                 json.dumps({"success": False, "error": "No glucose measurement available"}),
                 status=404,
                 headers=headers,
             )
 
-        value = glucose_measurement.get("ValueInMgPerDl") or glucose_measurement.get("Value")
-        trend_arrow = glucose_measurement.get("TrendArrow", 3)
-        trend = LIBRE_TREND_ARROWS.get(trend_arrow, "unknown")
-        timestamp = glucose_measurement.get("Timestamp")
-        is_high = glucose_measurement.get("isHigh", False)
-        is_low = glucose_measurement.get("isLow", False)
+        # Get trend value (Trend is an IntEnum: 1=DOWN_FAST, 2=DOWN_SLOW, 3=STABLE, 4=UP_SLOW, 5=UP_FAST)
+        trend_value = int(latest.trend)  # Trend enum to int
+        trend_str = LIBRE_TREND_ARROWS.get(trend_value, "unknown")
 
         return https_fn.Response(
             json.dumps({
                 "success": True,
-                "value": value,
-                "trend": trend,
-                "trendArrow": trend_arrow,
-                "time": timestamp,
-                "isHigh": is_high,
-                "isLow": is_low,
-                "patientName": f"{connection.get('firstName', '')} {connection.get('lastName', '')}".strip(),
+                "value": latest.value_in_mg_per_dl,
+                "trend": trend_str,
+                "trendArrow": trend_value,
+                "time": str(latest.timestamp),
+                "isHigh": latest.is_high,
+                "isLow": latest.is_low,
+                "patientName": f"{patient.first_name} {patient.last_name}".strip(),
                 "source": "librelinkup"
             }),
             status=200,
@@ -419,7 +304,7 @@ def get_libre_glucose(req: https_fn.Request) -> https_fn.Response:
 
 @https_fn.on_request()
 def get_libre_glucose_history(req: https_fn.Request) -> https_fn.Response:
-    """Get glucose history (graph data) from LibreLinkUp API."""
+    """Get glucose history (graph data) from LibreLinkUp API using pylibrelinkup."""
     headers = {
         "Content-Type": "application/json",
         "Access-Control-Allow-Origin": "*",
@@ -431,10 +316,11 @@ def get_libre_glucose_history(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response("", status=204, headers=headers)
 
     try:
+        from pylibrelinkup import PyLibreLinkUp, APIUrl, RedirectError
+
         data = req.get_json() if req.get_json() else {}
         email = data.get("email", "")
         password = data.get("password", "")
-        region = data.get("region", "eu")
 
         if not email or not password:
             return https_fn.Response(
@@ -443,84 +329,60 @@ def get_libre_glucose_history(req: https_fn.Request) -> https_fn.Response:
                 headers=headers,
             )
 
-        # Step 1: Login
-        login_response = libre_login(email, password, region)
+        # Initialize client - default to EU region, handle redirect if needed
+        api_url = APIUrl.EU
+        client = PyLibreLinkUp(email=email, password=password, api_url=api_url)
         
-        if login_response.get("status") != 0:
-            error_msg = login_response.get("error", {}).get("message", "Login failed")
-            return https_fn.Response(
-                json.dumps({"success": False, "error": error_msg}),
-                status=401,
-                headers=headers,
-            )
+        try:
+            client.authenticate()
+        except RedirectError as e:
+            # User is in a different region, retry with the correct one
+            client = PyLibreLinkUp(email=email, password=password, api_url=e.region)
+            client.authenticate()
 
-        auth_ticket = login_response.get("data", {}).get("authTicket", {})
-        token = auth_ticket.get("token")
-        user_id = login_response.get("data", {}).get("user", {}).get("id")
-        base_url = login_response.get("_base_url")
-
-        if not token or not user_id:
-            return https_fn.Response(
-                json.dumps({"success": False, "error": "Failed to get auth token"}),
-                status=401,
-                headers=headers,
-            )
-
-        # Step 2: Get connections
-        connections_response = libre_get_connections(base_url, token, user_id)
-        
-        if connections_response.get("status") != 0:
-            return https_fn.Response(
-                json.dumps({"success": False, "error": "Failed to get connections"}),
-                status=500,
-                headers=headers,
-            )
-
-        connections = connections_response.get("data", [])
-        if not connections:
+        # Get patients
+        patients = client.get_patients()
+        if not patients:
             return https_fn.Response(
                 json.dumps({"success": False, "error": "No patient connections found"}),
                 status=404,
                 headers=headers,
             )
 
-        # Step 3: Get graph data for first connection
-        connection = connections[0]
-        patient_id = connection.get("patientId")
-        
-        graph_response = libre_get_graph_data(base_url, token, user_id, patient_id)
-        
-        if graph_response.get("status") != 0:
-            return https_fn.Response(
-                json.dumps({"success": False, "error": "Failed to get graph data"}),
-                status=500,
-                headers=headers,
-            )
+        # Get graph data and latest for first patient
+        patient = patients[0]
+        graph_data = client.graph(patient_identifier=patient)
+        latest = client.latest(patient_identifier=patient)
 
-        graph_data = graph_response.get("data", {}).get("graphData", [])
-        current_measurement = graph_response.get("data", {}).get("connection", {}).get("glucoseMeasurement", {})
-
-        # Format the graph data
+        # Format the graph data (GlucoseMeasurement has value_in_mg_per_dl, timestamp, is_high, is_low)
         formatted_history = []
         for item in graph_data:
             formatted_history.append({
-                "value": item.get("ValueInMgPerDl") or item.get("Value"),
-                "time": item.get("Timestamp"),
-                "isHigh": item.get("isHigh", False),
-                "isLow": item.get("isLow", False),
+                "value": item.value_in_mg_per_dl,
+                "time": str(item.timestamp),
+                "isHigh": item.is_high,
+                "isLow": item.is_low,
             })
+
+        # Current measurement (GlucoseMeasurementWithTrend has trend as Trend enum)
+        current = {}
+        if latest:
+            trend_value = int(latest.trend)  # Trend enum to int
+            trend_str = LIBRE_TREND_ARROWS.get(trend_value, "unknown")
+            
+            current = {
+                "value": latest.value_in_mg_per_dl,
+                "trend": trend_str,
+                "trendArrow": trend_value,
+                "time": str(latest.timestamp),
+                "isHigh": latest.is_high,
+                "isLow": latest.is_low,
+            }
 
         return https_fn.Response(
             json.dumps({
                 "success": True,
-                "current": {
-                    "value": current_measurement.get("ValueInMgPerDl") or current_measurement.get("Value"),
-                    "trend": LIBRE_TREND_ARROWS.get(current_measurement.get("TrendArrow", 3), "unknown"),
-                    "trendArrow": current_measurement.get("TrendArrow"),
-                    "time": current_measurement.get("Timestamp"),
-                    "isHigh": current_measurement.get("isHigh", False),
-                    "isLow": current_measurement.get("isLow", False),
-                },
+                "current": current,
                 "history": formatted_history,
                 "historyCount": len(formatted_history),
                 "source": "librelinkup"
@@ -555,10 +417,11 @@ def get_libre_connections(req: https_fn.Request) -> https_fn.Response:
         return https_fn.Response("", status=204, headers=headers)
 
     try:
+        from pylibrelinkup import PyLibreLinkUp, APIUrl, RedirectError
+
         data = req.get_json() if req.get_json() else {}
         email = data.get("email", "")
         password = data.get("password", "")
-        region = data.get("region", "eu")
 
         if not email or not password:
             return https_fn.Response(
@@ -567,49 +430,52 @@ def get_libre_connections(req: https_fn.Request) -> https_fn.Response:
                 headers=headers,
             )
 
-        # Login
-        login_response = libre_login(email, password, region)
+        # Initialize client - default to EU region, handle redirect if needed
+        api_url = APIUrl.EU
+        client = PyLibreLinkUp(email=email, password=password, api_url=api_url)
         
-        if login_response.get("status") != 0:
-            error_msg = login_response.get("error", {}).get("message", "Login failed")
-            return https_fn.Response(
-                json.dumps({"success": False, "error": error_msg}),
-                status=401,
-                headers=headers,
-            )
+        try:
+            client.authenticate()
+        except RedirectError as e:
+            # User is in a different region, retry with the correct one
+            client = PyLibreLinkUp(email=email, password=password, api_url=e.region)
+            client.authenticate()
 
-        auth_ticket = login_response.get("data", {}).get("authTicket", {})
-        token = auth_ticket.get("token")
-        user_id = login_response.get("data", {}).get("user", {}).get("id")
-        base_url = login_response.get("_base_url")
-
-        # Get connections
-        connections_response = libre_get_connections(base_url, token, user_id)
-        
-        if connections_response.get("status") != 0:
-            return https_fn.Response(
-                json.dumps({"success": False, "error": "Failed to get connections"}),
-                status=500,
-                headers=headers,
-            )
-
-        connections = connections_response.get("data", [])
+        # Get patients (Patient has: patient_id, first_name, last_name)
+        patients = client.get_patients()
         
         # Format connections
         formatted_connections = []
-        for conn in connections:
-            glucose = conn.get("glucoseMeasurement", {})
+        for patient in patients:
+            # Get latest glucose for each patient
+            latest = client.latest(patient_identifier=patient)
+            
+            trend_value = 3
+            trend_str = "stable"
+            current_glucose = None
+            timestamp = None
+            is_high = False
+            is_low = False
+            
+            if latest:
+                trend_value = int(latest.trend)  # Trend enum to int
+                trend_str = LIBRE_TREND_ARROWS.get(trend_value, "unknown")
+                current_glucose = latest.value_in_mg_per_dl
+                timestamp = str(latest.timestamp)
+                is_high = latest.is_high
+                is_low = latest.is_low
+
             formatted_connections.append({
-                "patientId": conn.get("patientId"),
-                "firstName": conn.get("firstName"),
-                "lastName": conn.get("lastName"),
-                "targetLow": conn.get("targetLow"),
-                "targetHigh": conn.get("targetHigh"),
-                "currentGlucose": glucose.get("ValueInMgPerDl") or glucose.get("Value"),
-                "trend": LIBRE_TREND_ARROWS.get(glucose.get("TrendArrow", 3), "unknown"),
-                "time": glucose.get("Timestamp"),
-                "isHigh": glucose.get("isHigh", False),
-                "isLow": glucose.get("isLow", False),
+                "patientId": str(patient.patient_id),
+                "firstName": patient.first_name,
+                "lastName": patient.last_name,
+                "targetLow": None,  # Patient model doesn't have target_low/target_high
+                "targetHigh": None,
+                "currentGlucose": current_glucose,
+                "trend": trend_str,
+                "time": timestamp,
+                "isHigh": is_high,
+                "isLow": is_low,
             })
 
         return https_fn.Response(
