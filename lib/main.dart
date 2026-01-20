@@ -7,6 +7,9 @@ import 'package:provider/provider.dart';
 import 'ui/view_models/home_view_model.dart';
 import 'ui/view_models/meal_view_model.dart';
 import 'ui/view_models/analysis_view_model.dart';
+import 'package:provider/provider.dart';
+import 'firebase_options.dart';
+
 import 'ui/view_models/theme_view_model.dart';
 import 'ui/view_models/statistics_view_model.dart';
 import 'ui/view_models/health_connect_view_model.dart';
@@ -20,6 +23,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
 
   await MealRepository.init();
 

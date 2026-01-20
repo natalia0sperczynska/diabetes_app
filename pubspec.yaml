@@ -15,7 +15,7 @@ dependencies:
   provider: ^6.1.5+1
   
   # Firebase
-  firebase_core: ^3.8.1
+  firebase_core: ^3.15.2
   firebase_auth: ^5.3.4
   cloud_firestore: ^5.5.0
   google_fonts: ^6.3.2
@@ -35,7 +35,12 @@ dependencies:
   health: ^13.2.0
   permission_handler: ^11.3.1
   intl: ^0.20.2
-  
+  firebase_ai: ^2.3.0
+  #PDF generation
+  pdf: ^3.11.3
+  path_provider: ^2.1.5
+  open_file: ^3.5.10
+
   # Secure Storage for Dexcom credentials
   flutter_secure_storage: ^9.2.2
 
