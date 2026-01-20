@@ -402,6 +402,72 @@ def get_libre_glucose_history(req: https_fn.Request) -> https_fn.Response:
             headers=headers,
         )
 
+@scheduler_fn.on_schedule(schedule="every 5 minutes", secrets=["LIBRE_EMAIL", "LIBRE_PASSWORD"])
+def get_glucose_history_libre(event: scheduler_fn.ScheduledEvent) -> None:
+    """Get glucose history (graph data) from LibreLinkUp API using pylibrelinkup."""
+    db = firestore.client()
+    LIBRE_EMAIL = os.environ.get("LIBRE_EMAIL", "")
+    LIBRE_PASS = os.environ.get("LIBRE_PASSWORD", "")
+
+    if not LIBRE_EMAIL or not LIBRE_PASS:
+        print("Error: LIBRE_EMAIL or LIBRE_PASSWORD secrets not set.")
+        return
+
+    print(f"Auto-fetching Libre data for {LIBRE_EMAIL}...")
+
+    try:
+        from pylibrelinkup import PyLibreLinkUp, APIUrl, RedirectError
+
+        api_url = APIUrl.EU
+        client = PyLibreLinkUp(email=LIBRE_EMAIL, password=LIBRE_PASS, api_url=api_url)
+
+        try:
+            client.authenticate()
+        except RedirectError as e:
+            client = PyLibreLinkUp(email=LIBRE_EMAIL, password=LIBRE_PASS, api_url=e.region)
+            client.authenticate()
+
+        patients = client.get_patients()
+        if not patients:
+            print("Error: No patient connections found")
+            return
+
+        patient = patients[0]
+        latest = client.latest(patient_identifier=patient)
+        if not latest:
+            print("No data from Libre.")
+            return
+
+        current_glucose = latest.value_in_mg_per_dl
+        if current_glucose is None:
+            print("No data from Libre.")
+            return
+
+
+        trend_value = int(latest.trend)
+        current_trend = LIBRE_TREND_ARROWS.get(trend_value, "Unknown")
+
+        current_time_obj = latest.timestamp
+        current_time_str = str(current_time_obj)
+
+        doc_id = current_time_str.replace(":", "-").replace(" ", "_").replace(".", "-")
+
+        user_ref = db.collection("Glucose_measurements").document(LIBRE_EMAIL)
+        measurement_ref = user_ref.collection("history").document(doc_id)
+
+        measurement_ref.set({
+            "Glucose": current_glucose,
+            "Trend": current_trend,
+            "Time": current_time_str,
+            "Timestamp": current_time_obj,
+            "SavedAt": firestore.SERVER_TIMESTAMP,
+            "Source": "LibreLinkUp"
+        }, merge=True)
+
+        print(f"Saved Libre: {current_glucose} mg/dL, trend: {current_trend}")
+
+    except Exception as e:
+        print(f"Libre Error: {e}")
 
 @https_fn.on_request()
 def get_libre_connections(req: https_fn.Request) -> https_fn.Response:
@@ -498,3 +564,5 @@ def get_libre_connections(req: https_fn.Request) -> https_fn.Response:
             status=500,
             headers=headers,
         )
+
+
