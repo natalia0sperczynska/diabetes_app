@@ -10,6 +10,8 @@ class DailyStats {
 
   final Map<String, double> ranges;
 
+  final List<double> samples;
+
   DailyStats({
     required this.date,
     required this.averageGlucose,
@@ -18,6 +20,7 @@ class DailyStats {
     required this.coefficientOfVariation,
     required this.sensorActivePercent,
     required this.ranges,
+    required this.samples,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,6 +32,7 @@ class DailyStats {
       'coefficientOfVariation': coefficientOfVariation,
       'sensorActivePercent': sensorActivePercent,
       'ranges': ranges,
+      'samples': samples,
     };
   }
 
@@ -44,6 +48,7 @@ class DailyStats {
             (key, value) => MapEntry(key, (value as num).toDouble()),
           ) ??
           {},
+      samples: (map['samples'] as List<dynamic>?)?.map((e) => (e as num).toDouble()).toList() ?? [],
     );
   }
 }

@@ -92,20 +92,19 @@ class AnalysisContent extends StatelessWidget {
               const SizedBox(height: 16),
               const AnalysisBenchmarks(),
               const SizedBox(height: 24),
-              const AnalysisTitle(title: "TEMPORAL ANOMALY SCAN"),
               const AnalysisTitle(title: "ACHIEVEMENTS"),
               BestDayWidget(bestDayText: vm.bestDayText),
               const SizedBox(height: 24),
               const AnalysisTitle(title: "AI DIAGNOSTIC"),
               const AnalysisAI(),
               const SizedBox(height: 24),
-              const AnalysisTitle(title: "PDF"),
+              const AnalysisTitle(title: "GLUCOSE PDF REPORT"),
               FilledButton(
                 onPressed:() async{
                   final pdf = PdfApi.generate(vm.aiAnalysisResult, vm.bestDayText);
                   await SaveAndOpenDocument.openPDF(await pdf);
                 }, child: CyberGlitchText(
-                "Load Data",
+                "GENERATE",
                 style: GoogleFonts.vt323(
                     fontSize: 32,
                     color: Theme.of(context).colorScheme.onPrimary),

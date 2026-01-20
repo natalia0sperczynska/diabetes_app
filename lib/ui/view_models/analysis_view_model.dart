@@ -18,6 +18,8 @@ class AnalysisViewModel extends ChangeNotifier {
   List<DailyStats> _cachedDailyData = [];
   bool _isLoading = false;
   int _daysToAnalyze = 14;
+  List<AgpChartData> _agpData = [];
+
 
   AnalysisStats _stats = AnalysisStats.empty();
 
@@ -31,14 +33,18 @@ class AnalysisViewModel extends ChangeNotifier {
 
   String get aiAnalysisResult => _aiAnalysisResult;
 
+  List<AgpChartData> get agpData => _agpData;
+
   bool get isAiLoading => _isAiLoading;
 
   List<DailyStats> get cachedDailyData => _cachedDailyData;
+
 
   Future<void> loadData() async {
     _isLoading = true;
     notifyListeners();
     if (_cachedDailyData.isNotEmpty) {
+      _calculateAgpData(_cachedDailyData);
       _stats = AnalysisStats.fromDailyStatsList(_cachedDailyData);
       notifyListeners();
       _isLoading = false;
@@ -50,6 +56,8 @@ class AnalysisViewModel extends ChangeNotifier {
 
       if (dailyData.isNotEmpty) {
         _stats = AnalysisStats.fromDailyStatsList(dailyData);
+        _cachedDailyData = dailyData;
+        _agpData = _calculateAgpData(dailyData);
         _updateCache(dailyData);
         log("Stats from firebase: ${dailyData.length} days ");
       } else {
@@ -66,6 +74,62 @@ class AnalysisViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  List<AgpChartData> _calculateAgpData(List<DailyStats> days) {
+    List<List<double>> hourlyBuckets = List.generate(24, (_) => []);
+
+    for (var day in days) {
+      if (day.samples.isEmpty) continue;
+
+      int totalSamples = day.samples.length;
+
+      for (int i = 0; i < totalSamples; i++) {
+        int hour = ((i / totalSamples) * 24).floor();
+
+        if (hour < 24) {
+          hourlyBuckets[hour].add(day.samples[i]);
+        }
+      }
+    }
+
+    List<AgpChartData> result = [];
+    for (int hour = 0; hour < 24; hour++) {
+      var values = hourlyBuckets[hour];
+
+      if (values.isEmpty) {
+        result.add(AgpChartData(hour: hour, p5: 0, p25: 0, p50: 0, p75: 0, p95: 0));
+        continue;
+      }
+
+      values.sort();
+      result.add(AgpChartData(
+        hour: hour,
+        p5: _getPercentile(values, 5),
+        p25: _getPercentile(values, 25),
+        p50: _getPercentile(values, 50),
+        p75: _getPercentile(values, 75),
+        p95: _getPercentile(values, 95),
+      ));
+    }
+    return result;
+  }
+
+  double _getPercentile(List<double> sortedValues, int percentile) {
+    if (sortedValues.isEmpty) return 0;
+    int index = ((percentile / 100) * (sortedValues.length - 1)).round();
+    return sortedValues[index];
+  }
+
+  List<int> getHourlyRiskProfile() {
+    if (_agpData.isEmpty) return List.filled(24, 0);
+
+    return _agpData.map((data) {
+      if (data.p50 == 0) return 0;
+      if (data.p50 < 70) return 1;
+      if (data.p50 > 180) return 2;
+      return 0;
+    }).toList();
   }
 
   DailyStats? get bestDayStat {
@@ -175,4 +239,21 @@ CRITICAL REMINDER: This analysis is for informational support only. It is not me
     }
   }
 
+}
+class AgpChartData {
+  final int hour;
+  final double p5;
+  final double p25;
+  final double p50;
+  final double p75;
+  final double p95;
+
+  AgpChartData({
+    required this.hour,
+    required this.p5,
+    required this.p25,
+    required this.p50,
+    required this.p75,
+    required this.p95
+  });
 }

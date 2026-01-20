@@ -111,6 +111,7 @@ class FirebaseService {
       coefficientOfVariation: calculated.coefficientOfVariation,
       sensorActivePercent: calculated.sensorActivePercent,
       ranges: calculated.ranges,
+      samples: glucoseReadings,
     );
 
     await _firestore
