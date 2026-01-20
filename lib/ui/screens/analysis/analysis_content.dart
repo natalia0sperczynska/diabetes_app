@@ -8,7 +8,14 @@ import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_time_in_range.
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_title.dart';
 import 'package:diabetes_app/ui/view_models/analysis_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import '../../../services/service_pdf/pdf_api.dart';
+import '../../../services/service_pdf/save_open_document.dart';
+import '../../widgets/vibe/glitch.dart';
 
 //widok, logika biznesowa, rysuje dane na podstawie danych z view modela
 class AnalysisContent extends StatelessWidget {
@@ -92,10 +99,26 @@ class AnalysisContent extends StatelessWidget {
               const AnalysisTitle(title: "AI DIAGNOSTIC"),
               const AnalysisAI(),
               const SizedBox(height: 24),
+              const AnalysisTitle(title: "PDF"),
+              FilledButton(
+                onPressed:() async{
+                  final pdf = PdfApi.generate(vm.aiAnalysisResult, vm.bestDayText);
+                  await SaveAndOpenDocument.openPDF(await pdf);
+                }, child: CyberGlitchText(
+                "Load Data",
+                style: GoogleFonts.vt323(
+                    fontSize: 32,
+                    color: Theme.of(context).colorScheme.onPrimary),
+              ),
+              )
             ],
           ),
         ),
       ],
     );
+  }
+
+  VoidCallback? generatePDF() {
+    final pdf = pw.Document();
   }
 }
