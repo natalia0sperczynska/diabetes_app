@@ -25,9 +25,6 @@ class AppTheme {
         surfaceContainer: AppColors.darkBlue2,
         onSurfaceVariant: Colors.white,
 
-        background: AppColors.darkBlue2,
-        onBackground: Colors.white,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -84,14 +81,11 @@ class AppTheme {
         surfaceContainer: Color(0xFFF6F6F6),
         onSurfaceVariant: Colors.black,
 
-        background: Color(0xFFF6F6F6),
-        onBackground: Colors.black,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
 
-      scaffoldBackgroundColor: Color(0xFFF6F6F6),
+      scaffoldBackgroundColor: const Color(0xFFF6F6F6),
 
       appBarTheme: AppBarTheme(
         backgroundColor: Colors.white,
@@ -133,9 +127,6 @@ class AppTheme {
         surfaceContainer: AppColors.popeYellowSurfaceDark,
         onSurfaceVariant: Colors.white,
 
-        background: AppColors.popeYellowBackgroundDark,
-        onBackground: Colors.white,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -155,7 +146,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.popeYellowBackgroundDark),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.popeYellowBackgroundDark),
     );
   }
 
@@ -182,9 +173,6 @@ class AppTheme {
         surfaceContainer: AppColors.popeYellowSurfaceLight,
         onSurfaceVariant: Colors.black,
 
-        background: AppColors.popeYellowBackgroundLight,
-        onBackground: Colors.black,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -204,7 +192,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.popeYellowBackgroundLight),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.popeYellowBackgroundLight),
     );
   }
 
@@ -231,9 +219,6 @@ class AppTheme {
         surfaceContainer: AppColors.forestGreenSurfaceDark,
         onSurfaceVariant: Colors.white,
 
-        background: AppColors.forestGreenBackgroundDark,
-        onBackground: Colors.white,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -253,7 +238,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.forestGreenBackgroundDark),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.forestGreenBackgroundDark),
     );
   }
 
@@ -280,9 +265,6 @@ class AppTheme {
         surfaceContainer: AppColors.forestGreenSurfaceLight,
         onSurfaceVariant: Colors.black,
 
-        background: AppColors.forestGreenBackgroundLight,
-        onBackground: Colors.black,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -302,7 +284,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.forestGreenBackgroundLight),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.forestGreenBackgroundLight),
     );
   }
 
@@ -329,9 +311,6 @@ class AppTheme {
         surfaceContainer: AppColors.sunsetOrangeSurfaceDark,
         onSurfaceVariant: Colors.white,
 
-        background: AppColors.sunsetOrangeBackgroundDark,
-        onBackground: Colors.white,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -351,7 +330,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.sunsetOrangeBackgroundDark),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.sunsetOrangeBackgroundDark),
     );
   }
 
@@ -378,9 +357,6 @@ class AppTheme {
         surfaceContainer: AppColors.sunsetOrangeSurfaceLight,
         onSurfaceVariant: Colors.black,
 
-        background: AppColors.sunsetOrangeBackgroundLight,
-        onBackground: Colors.black,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -400,7 +376,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.sunsetOrangeBackgroundLight),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.sunsetOrangeBackgroundLight),
     );
   }
 
@@ -427,9 +403,6 @@ class AppTheme {
         surfaceContainer: AppColors.deepPurpleSurfaceDark,
         onSurfaceVariant: Colors.white,
 
-        background: AppColors.deepPurpleBackgroundDark,
-        onBackground: Colors.white,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -449,7 +422,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.deepPurpleBackgroundDark),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.deepPurpleBackgroundDark),
     );
   }
 
@@ -476,9 +449,6 @@ class AppTheme {
         surfaceContainer: AppColors.deepPurpleSurfaceLight,
         onSurfaceVariant: Colors.black,
 
-        background: AppColors.deepPurpleBackgroundLight,
-        onBackground: Colors.black,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -498,7 +468,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.deepPurpleBackgroundLight),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.deepPurpleBackgroundLight),
     );
   }
 
@@ -525,9 +495,6 @@ class AppTheme {
         surfaceContainer: AppColors.oceanBlueSurfaceDark,
         onSurfaceVariant: Colors.white,
 
-        background: AppColors.oceanBlueBackgroundDark,
-        onBackground: Colors.white,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -547,7 +514,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundDark),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundDark),
     );
   }
 
@@ -574,9 +541,6 @@ class AppTheme {
         surfaceContainer: AppColors.oceanBlueSurfaceLight,
         onSurfaceVariant: Colors.black,
 
-        background: AppColors.oceanBlueBackgroundLight,
-        onBackground: Colors.black,
-
         error: Colors.redAccent,
         onError: Colors.white,
       ),
@@ -596,7 +560,7 @@ class AppTheme {
         ),
       ),
 
-      drawerTheme: DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundLight),
+      drawerTheme: const DrawerThemeData(backgroundColor: AppColors.oceanBlueBackgroundLight),
     );
   }
   // Wewnątrz klasy AppTheme:
@@ -619,8 +583,6 @@ class AppTheme {
 
         surface: AppColors.cyberDarkBlue,
         onSurface: AppColors.neonCyan,
-        background: AppColors.cyberBlack,
-        onBackground: AppColors.neonCyan,
 
         surfaceContainer: AppColors.cyberBlack,
 
@@ -671,12 +633,12 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.cyberDarkBlue,
-        enabledBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: AppColors.neonCyan, width: 2),
+        enabledBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.neonCyan, width: 2),
           borderRadius: BorderRadius.zero,
         ),
-        focusedBorder: OutlineInputBorder(
-          borderSide: const BorderSide(color: AppColors.neonPink, width: 3),
+        focusedBorder: const OutlineInputBorder(
+          borderSide: BorderSide(color: AppColors.neonPink, width: 3),
           borderRadius: BorderRadius.zero,
         ),
         labelStyle: GoogleFonts.iceland(color: AppColors.neonGreen, fontSize: 18),

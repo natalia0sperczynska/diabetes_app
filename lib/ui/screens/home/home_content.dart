@@ -4,7 +4,6 @@ import 'package:diabetes_app/ui/widgets/snack_bars/awesome_snack_bar.dart';
 import 'package:diabetes_app/services/dexcom_service.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../themes/colors/app_colors.dart';
 import '../../view_models/home_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';

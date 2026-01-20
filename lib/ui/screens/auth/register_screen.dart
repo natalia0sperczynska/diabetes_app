@@ -114,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Hero(tag: 'logo', child: Icon(Icons.favorite, size: 80, color: AppColors.mainBlue,),),
+                  const Hero(tag: 'logo', child: Icon(Icons.favorite, size: 80, color: AppColors.mainBlue,),),
                   const SizedBox(height: 16),
                   Text(
                     'Create Account',
@@ -290,7 +290,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedGender,
+                    initialValue: _selectedGender,
                     dropdownColor: AppColors.darkBlue1,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(
@@ -334,7 +334,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   const SizedBox(height: 16),
 
                   DropdownButtonFormField<String>(
-                    value: _selectedCountry,
+                    initialValue: _selectedCountry,
                     dropdownColor: AppColors.darkBlue1,
                     style: const TextStyle(color: Colors.white),
                     decoration: InputDecoration(

@@ -25,7 +25,7 @@ class AnalysisAI extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.auto_awesome, color: Colors.purpleAccent),
+                    const Icon(Icons.auto_awesome, color: Colors.purpleAccent),
                     const SizedBox(width: 8),
                     CyberGlitchText(
                       "AI DIAGNOSTIC",

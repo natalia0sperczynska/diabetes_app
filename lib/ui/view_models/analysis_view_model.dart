@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 import '../../data/model/AnalysisModel.dart';
 import '../../data/model/DailyStats.dart';
 import '../../services/firebase_service.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_ai/firebase_ai.dart';
 
 //do przechowania i pobrania danych
@@ -17,7 +16,7 @@ class AnalysisViewModel extends ChangeNotifier {
   bool _isAiLoading = false;
   List<DailyStats> _cachedDailyData = [];
   bool _isLoading = false;
-  int _daysToAnalyze = 14;
+  final int _daysToAnalyze = 14;
   List<AgpChartData> _agpData = [];
 
 

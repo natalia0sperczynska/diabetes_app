@@ -61,7 +61,7 @@ class ProductDetailsScreen extends StatelessWidget {
                           decoration: BoxDecoration(border: Border.all(color: Colors.white24)),
                           child: product['image_url'] != null
                               ? Image.network(product['image_url'], fit: BoxFit.cover)
-                              : Icon(Icons.fastfood, size: 40, color: Colors.white24),
+                              : const Icon(Icons.fastfood, size: 40, color: Colors.white24),
                         ),
                         const SizedBox(width: 16),
                         Expanded(

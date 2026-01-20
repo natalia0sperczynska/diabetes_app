@@ -11,7 +11,7 @@ class AppColors {
   static const green = Color(0xFF39FF14);
   static const pixelBorder = Color(0xFF6A0DAD);
   static const black = Color(0xFF000000);
-  static const grey = Color(0x8000000);
+  static const grey = Color(0x08000000);
 
   // New Theme: Pope Yellow
   static const popeYellowPrimaryDark = Color(0xFFBFA800);

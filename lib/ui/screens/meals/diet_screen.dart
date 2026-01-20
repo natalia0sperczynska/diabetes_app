@@ -195,7 +195,7 @@ class _DietScreenState extends State<DietScreen> {
             style: GoogleFonts.vt323(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: colorScheme.onBackground,
+              color: colorScheme.onSurface,
             ),
           ),
           IconButton(
@@ -256,7 +256,7 @@ class _DietScreenState extends State<DietScreen> {
                       children: [
                         CircularProgressIndicator(
                           value: (_totalCalories / dailyCalorieGoal).clamp(0.0, 1.0),
-                          backgroundColor: colorScheme.surfaceVariant.withOpacity(0.3),
+                          backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.3),
                           color: calorieColor,
                           strokeWidth: 6,
                         ),
@@ -331,7 +331,7 @@ class _DietScreenState extends State<DietScreen> {
           borderRadius: BorderRadius.zero,
           child: LinearProgressIndicator(
             value: (value / goal).clamp(0.0, 1.0),
-            backgroundColor: colorScheme.surfaceVariant.withOpacity(0.2),
+            backgroundColor: colorScheme.surfaceContainerHighest.withOpacity(0.2),
             color: color,
             minHeight: 6,
           ),
@@ -360,7 +360,7 @@ class _DietScreenState extends State<DietScreen> {
                       const SizedBox(width: 8),
                       CyberGlitchText(
                           title.toUpperCase(),
-                          style: GoogleFonts.vt323(fontSize: 24, fontWeight: FontWeight.bold, color: colorScheme.onBackground)
+                          style: GoogleFonts.vt323(fontSize: 24, fontWeight: FontWeight.bold, color: colorScheme.onSurface)
                       ),
                     ],
                   ),
@@ -430,7 +430,7 @@ class _DietScreenState extends State<DietScreen> {
                     border: Border.all(color: Colors.white10),
                   ),
                   child: meal.imageUrl != null && meal.imageUrl!.isNotEmpty
-                      ? Image.network(meal.imageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => Icon(Icons.fastfood, color: Colors.white30))
+                      ? Image.network(meal.imageUrl!, fit: BoxFit.cover, errorBuilder: (c, e, s) => const Icon(Icons.fastfood, color: Colors.white30))
                       : Icon(Icons.restaurant, color: AppColors.mainBlue.withOpacity(0.8)),
                 ),
                 const SizedBox(width: 12),

@@ -142,5 +142,6 @@ class AnalysisContent extends StatelessWidget {
 
   VoidCallback? generatePDF() {
     final pdf = pw.Document();
+    return null;
   }
 }

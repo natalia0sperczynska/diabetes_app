@@ -7,7 +7,7 @@ import '../home/home_screen.dart';
 
 List<Widget> getPagesWithContext(BuildContext context) {
   return [
-    IntroComponent(
+    const IntroComponent(
       title: "MONITOR YOUR SUGAR",
       description: "Connect to your sensor and track your glucose levels.",
       image: AppAssets.monitor,
@@ -26,7 +26,7 @@ List<Widget> getPagesWithContext(BuildContext context) {
         );
       },
     ),
-    IntroComponent(
+    const IntroComponent(
       title: "ANALYZE YOUR RESULTS",
       description: "Clear graphs will help you better control your diabetes.",
       image: AppAssets.stats,
@@ -36,18 +36,18 @@ List<Widget> getPagesWithContext(BuildContext context) {
 
 // Keep for backwards compatibility
 final List<Widget> pages = [
-  IntroComponent(
+  const IntroComponent(
     title: "MONITOR YOUR SUGAR",
     description: "Connect to your sensor and track your glucose levels.",
     image: AppAssets.monitor,
   ),
-  IntroComponent(
+  const IntroComponent(
     title: "TRACK YOUR MEALS",
     description:
         "Log down your carbohydrates and see how they affect your health.",
     image: AppAssets.meals,
   ),
-  IntroComponent(
+  const IntroComponent(
     title: "ANALYZE YOUR RESULTS",
     description: "Clear graphs will help you better control your diabetes.",
     image: AppAssets.stats,

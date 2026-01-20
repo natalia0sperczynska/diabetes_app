@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../utils/app_assets/app_assets.dart';
-import '../../themes/colors/app_colors.dart';
 import '../../themes/buttons/meal_tracker_buttons.dart';
 import '../../view_models/meal_view_model.dart';
 import '../../widgets/pixel_input_field.dart';

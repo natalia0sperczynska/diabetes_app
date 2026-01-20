@@ -32,7 +32,7 @@ class CyberButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: colorScheme.surface,
           foregroundColor: colorScheme.primary,
-          shadowColor: colorScheme.background,
+          shadowColor: colorScheme.surface,
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           shape: BeveledRectangleBorder(
             borderRadius: BorderRadius.circular(10.0),

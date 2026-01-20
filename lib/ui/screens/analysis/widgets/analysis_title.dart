@@ -25,7 +25,7 @@ class AnalysisTitle extends StatelessWidget {
             fontSize: 26,
             fontWeight: FontWeight.bold,
             letterSpacing: 2.0,
-            color: colorScheme.onBackground,
+            color: colorScheme.onSurface,
           ),
         ),
       ],

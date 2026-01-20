@@ -29,12 +29,11 @@ class _StatsScreenState extends State<StatsScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme,
-            dialogBackgroundColor: Theme.of(context).scaffoldBackgroundColor,
             textButtonTheme: TextButtonThemeData(
               style: TextButton.styleFrom(
                 textStyle: GoogleFonts.vt323(fontSize: 18),
               ),
-            ),
+            ), dialogTheme: DialogThemeData(backgroundColor: Theme.of(context).scaffoldBackgroundColor),
           ),
           child: child!,
         );
@@ -250,7 +249,7 @@ class _StatsScreenState extends State<StatsScreen> {
                                 style: GoogleFonts.vt323(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: colorScheme.onBackground,
+                                  color: colorScheme.onSurface,
                                 ),
                               ),
                             ],
@@ -277,7 +276,7 @@ class _StatsScreenState extends State<StatsScreen> {
                         color: colorScheme.surface.withOpacity(0.85),
                         shape: BeveledRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: AppColors.mainBlue, width: 1.5),
+                          side: const BorderSide(color: AppColors.mainBlue, width: 1.5),
                         ),
                         shadows: [
                           BoxShadow(

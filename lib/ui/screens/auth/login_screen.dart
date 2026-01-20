@@ -85,7 +85,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Hero(tag: 'logo', child: Icon(Icons.favorite, size: 80, color: AppColors.mainBlue),),
+                  const Hero(tag: 'logo', child: Icon(Icons.favorite, size: 80, color: AppColors.mainBlue),),
                   const SizedBox(height: 16),
                   Text(
                     'Diabetes App',

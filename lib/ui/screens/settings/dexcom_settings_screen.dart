@@ -292,7 +292,7 @@ class _DexcomSettingsScreenState extends State<DexcomSettingsScreen> {
                     ),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
-                      value: _selectedRegion,
+                      initialValue: _selectedRegion,
                       decoration: const InputDecoration(
                         labelText: 'Region',
                         prefixIcon: Icon(Icons.public),

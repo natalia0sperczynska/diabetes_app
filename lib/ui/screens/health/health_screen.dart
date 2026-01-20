@@ -53,7 +53,7 @@ class _HealthScreenState extends State<HealthScreen> {
                         style: GoogleFonts.iceland(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
-                          color: colorScheme.onBackground,
+                          color: colorScheme.onSurface,
                         ),
                       ),
                     ],

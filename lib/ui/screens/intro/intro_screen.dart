@@ -30,7 +30,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   void _onNext() {
     if (_currentIndex < _pages.length - 1) {
       _pageController.nextPage(
-        duration: Duration(milliseconds: 300),
+        duration: const Duration(milliseconds: 300),
         curve: Curves.easeIn,
       );
     } else {
@@ -48,7 +48,7 @@ class _IntroductionScreenState extends State<IntroductionScreen> {
   void _animateToPage(int index) {
     _pageController.animateToPage(
       index,
-      duration: Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 300),
       curve: Curves.easeIn,
     );
   }

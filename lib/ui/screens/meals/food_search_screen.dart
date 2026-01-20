@@ -9,7 +9,6 @@ import 'services/open_food_facts_service.dart';
 import 'services/local_food_service.dart';
 import 'utils/nutrition_parser.dart';
 import 'widgets/barcode_scanner_dialog.dart';
-import 'product_details_screen.dart';
 
 class FoodSearchScreen extends StatefulWidget {
   final String mealType;
@@ -99,7 +98,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             color: colorScheme.surface.withOpacity(0.95),
             shape: BeveledRectangleBorder(
               borderRadius: BorderRadius.circular(16),
-              side: BorderSide(color: AppColors.mainBlue, width: 2),
+              side: const BorderSide(color: AppColors.mainBlue, width: 2),
             ),
             shadows: [
               BoxShadow(color: AppColors.mainBlue.withOpacity(0.4), blurRadius: 20)
@@ -236,9 +235,9 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                     decoration: InputDecoration(
                       hintText: 'ENTER PRODUCT NAME...',
                       hintStyle: GoogleFonts.vt323(color: colorScheme.onSurfaceVariant.withOpacity(0.5)),
-                      prefixIcon: Icon(Icons.search, color: AppColors.mainBlue),
+                      prefixIcon: const Icon(Icons.search, color: AppColors.mainBlue),
                       suffixIcon: IconButton(
-                        icon: Icon(Icons.qr_code_scanner, color: AppColors.green),
+                        icon: const Icon(Icons.qr_code_scanner, color: AppColors.green),
                         onPressed: _onScanBarcode,
                       ),
                       border: InputBorder.none,
@@ -250,7 +249,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
 
               Expanded(
                 child: _isLoading
-                    ? Center(child: CircularProgressIndicator(color: AppColors.mainBlue))
+                    ? const Center(child: CircularProgressIndicator(color: AppColors.mainBlue))
                     : ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: _searchResults.length,
@@ -292,7 +291,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
                 border: Border.all(color: Colors.white10),
               ),
               child: product['image_url'] != null
-                  ? Image.network(product['image_url'], fit: BoxFit.cover, errorBuilder: (_,__,___) => Icon(Icons.fastfood, color: Colors.white24))
+                  ? Image.network(product['image_url'], fit: BoxFit.cover, errorBuilder: (_,__,___) => const Icon(Icons.fastfood, color: Colors.white24))
                   : Icon(Icons.inventory_2, color: AppColors.mainBlue.withOpacity(0.7)),
             ),
             const SizedBox(width: 16),
@@ -326,7 +325,7 @@ class _FoodSearchScreenState extends State<FoodSearchScreen> {
             ),
 
             const SizedBox(width: 12),
-            Icon(Icons.add_circle_outline, color: AppColors.mainBlue),
+            const Icon(Icons.add_circle_outline, color: AppColors.mainBlue),
           ],
         ),
       ),

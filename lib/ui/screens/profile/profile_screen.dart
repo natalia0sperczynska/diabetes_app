@@ -346,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         // Gender
                         DropdownButtonFormField<String>(
-                          value: _selectedGender,
+                          initialValue: _selectedGender,
                           decoration: InputDecoration(
                             labelText: 'Gender',
                             labelStyle: const TextStyle(color: Colors.white70),
@@ -391,7 +391,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                         // Country
                         DropdownButtonFormField<String>(
-                          value: _selectedCountry,
+                          initialValue: _selectedCountry,
                           decoration: InputDecoration(
                             labelText: 'Country',
                             labelStyle: const TextStyle(color: Colors.white70),
