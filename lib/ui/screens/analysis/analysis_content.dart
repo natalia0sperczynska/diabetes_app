@@ -1,3 +1,9 @@
+import 'package:awesome_snackbar_content/awesome_snackbar_content.dart';
+import 'package:diabetes_app/ui/widgets/vibe/glitch.dart';
+import 'package:diabetes_app/ui/widgets/snack_bars/awesome_snack_bar.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_ai.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_best_day.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_clinical_benchmarks.dart';
@@ -7,15 +13,11 @@ import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_sensor_usage.d
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_time_in_range.dart';
 import 'package:diabetes_app/ui/screens/analysis/widgets/analysis_title.dart';
 import 'package:diabetes_app/ui/view_models/analysis_view_model.dart';
-import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../../../services/service_pdf/pdf_api.dart';
 import '../../../services/service_pdf/save_open_document.dart';
-import '../../widgets/vibe/glitch.dart';
+
 
 //widok, logika biznesowa, rysuje dane na podstawie danych z view modela
 class AnalysisContent extends StatelessWidget {
@@ -99,16 +101,37 @@ class AnalysisContent extends StatelessWidget {
               const AnalysisAI(),
               const SizedBox(height: 24),
               const AnalysisTitle(title: "GLUCOSE PDF REPORT"),
+              Center(
+                child:
               FilledButton(
                 onPressed:() async{
-                  final pdf = PdfApi.generate(vm.aiAnalysisResult, vm.bestDayText);
-                  await SaveAndOpenDocument.openPDF(await pdf);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text("Generating PDF... Please wait."))
+                  );
+                  try {
+                    final pdf = await PdfApi.generate(
+                      stats: vm.stats,
+                      aiAnalysis: vm.aiAnalysisResult.isNotEmpty
+                          ? vm.aiAnalysisResult
+                          : "No AI analysis requested.",
+                      bestDayText: vm.bestDayText,
+                    );
+                    await SaveAndOpenDocument.openPDF(pdf);
+                  }catch (e){
+                    SnackbarUtils.showAwesomeSnackbar(
+                      context,
+                      title: "Error generating pdf",
+                      message: e.toString(),
+                      contentType: ContentType.failure,
+                    );
+                  }
                 }, child: CyberGlitchText(
-                "GENERATE",
+                "GENERATE REPORT",
                 style: GoogleFonts.vt323(
-                    fontSize: 32,
+                    fontSize: 24,
                     color: Theme.of(context).colorScheme.onPrimary),
               ),
+              )
               )
             ],
           ),
