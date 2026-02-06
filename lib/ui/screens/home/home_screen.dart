@@ -10,7 +10,7 @@ import '../../widgets/navigation/bottom_navigation.dart';
 import '../meals/calculator_screen.dart';
 import '../meals/diet_screen.dart';
 import '../health/health_screen.dart';
-import 'home_content.dart';
+import '../analysis/analysis_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -22,17 +22,17 @@ class HomeScreen extends StatelessWidget {
     Widget getBody() {
       switch (viewModel.selectedIndex) {
         case 0:
-          return const HomeContent();
+          return const StatsScreen();
         case 1:
           return const CalculatorScreen();
         case 2:
           return const DietScreen();
         case 3:
-          return const StatsScreen();
+          return const AnalysisScreen();
         case 4:
           return const HealthScreen();
         default:
-          return const HomeContent();
+          return const StatsScreen();
       }
     }
 
