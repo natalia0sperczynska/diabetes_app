@@ -1,7 +1,9 @@
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:health/health.dart';
+
 import '../../view_models/health_connect_view_model.dart';
 import '../../widgets/vibe/glitch.dart';
 
@@ -33,11 +35,17 @@ class _HealthScreenState extends State<HealthScreen> {
         ),
         Scaffold(
           backgroundColor: Colors.transparent,
-          appBar: AppBar(title: CyberGlitchText(
-            "HEALTH CONNECT",
-            style: GoogleFonts.vt323(fontSize: 28, letterSpacing: 2.0, color: Colors.white),
+          appBar: AppBar(
+            title: CyberGlitchText(
+              "HEALTH CONNECT",
+              style: GoogleFonts.vt323(
+                fontSize: 28,
+                letterSpacing: 2.0,
+                color: Colors.white,
+              ),
+            ),
+            centerTitle: true,
           ),
-            centerTitle: true,),
           body: SafeArea(
             child: Column(
               children: [
@@ -45,11 +53,10 @@ class _HealthScreenState extends State<HealthScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: Row(
                     children: [
-                      Container(
-                          width: 4, height: 24, color: colorScheme.primary),
+                      Container(width: 4, height: 24, color: colorScheme.primary),
                       const SizedBox(width: 8),
                       CyberGlitchText(
-                        "DATA STREAM",
+                        "STATISTICS",
                         style: GoogleFonts.iceland(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -70,52 +77,37 @@ class _HealthScreenState extends State<HealthScreen> {
                   )
                 else
                   Expanded(
-                    child: Column(
-                      children: [
-                        Card(
-                          margin: const EdgeInsets.all(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                Column(
-                                  children: [
-                                    const Icon(Icons.directions_walk, size: 40),
-                                    const SizedBox(height: 8),
-                                    Text("${viewModel.steps}",
-                                        style: Theme.of(context)
-                                            .textTheme
-                                            .titleLarge),
-                                    const Text("Steps (Last 24h)"),
-                                  ],
-                                ),
-                              ],
-                            ),
+                    child: viewModel.isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : RefreshIndicator(
+                      onRefresh: () => viewModel.fetchData(),
+                      child: ListView(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                        children: [
+                          _SummaryCard(steps: viewModel.steps),
+                          const SizedBox(height: 12),
+
+                          _StatsGrid(
+                            peakHourlySteps: viewModel.peakHourlySteps,
+                            peakHourStart: viewModel.peakHourStart,
+                            activeHours: viewModel.activeHours,
+                            avgStepsPerHour: viewModel.avgStepsPerHour,
                           ),
-                        ),
-                        Expanded(
-                          child: viewModel.isLoading
-                              ? const Center(child: CircularProgressIndicator())
-                              : viewModel.healthDataList.isEmpty
-                                  ? const Center(child: Text("No data found"))
-                                  : ListView.builder(
-                                      itemCount:
-                                          viewModel.healthDataList.length,
-                                      itemBuilder: (context, index) {
-                                        HealthDataPoint p =
-                                            viewModel.healthDataList[index];
-                                        return ListTile(
-                                          leading: _getIconForType(p.type),
-                                          title: Text(_formatType(p.type)),
-                                          subtitle: Text(
-                                              "${p.value}\n${p.dateFrom} - ${p.dateTo}"),
-                                          isThreeLine: true,
-                                        );
-                                      },
-                                    ),
-                        ),
-                      ],
+                          const SizedBox(height: 16),
+
+                          const _SectionHeader(
+                            title: "STEPS (LAST 24H)",
+                            subtitle: "Hourly total",
+                          ),
+                          const SizedBox(height: 10),
+
+                          _StepsLineChart(hourly: viewModel.hourlySteps),
+                          const SizedBox(height: 14),
+
+                          // Optional: keep the raw feed available, but hidden behind an expansion tile.
+                          _RawDataExpansion(points: viewModel.healthDataList),
+                        ],
+                      ),
                     ),
                   ),
               ],
@@ -123,29 +115,343 @@ class _HealthScreenState extends State<HealthScreen> {
           ),
           floatingActionButton: viewModel.isAuthorized
               ? FloatingActionButton(
-                  onPressed: () => viewModel.fetchData(),
-                  child: const Icon(Icons.refresh),
-                )
+            onPressed: () => viewModel.fetchData(),
+            child: const Icon(Icons.refresh),
+          )
               : null,
         ),
       ],
     );
   }
+}
 
-  Icon _getIconForType(HealthDataType type) {
-    switch (type) {
-      case HealthDataType.STEPS:
-        return const Icon(Icons.directions_walk);
-      case HealthDataType.HEART_RATE:
-        return const Icon(Icons.favorite);
-      case HealthDataType.BLOOD_GLUCOSE:
-        return const Icon(Icons.water_drop);
-      default:
-        return const Icon(Icons.health_and_safety);
-    }
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String? subtitle;
+
+  const _SectionHeader({required this.title, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: GoogleFonts.iceland(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: colorScheme.onSurface,
+          ),
+        ),
+        if (subtitle != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 2),
+            child: Text(
+              subtitle!,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _SummaryCard extends StatelessWidget {
+  final int steps;
+
+  const _SummaryCard({required this.steps});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          children: [
+            const Icon(Icons.directions_walk, size: 42),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "$steps",
+                    style: Theme.of(context).textTheme.headlineMedium,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    "Total steps (last 24h)",
+                    style: Theme.of(context).textTheme.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StatsGrid extends StatelessWidget {
+  final int peakHourlySteps;
+  final DateTime? peakHourStart;
+  final int activeHours;
+  final double avgStepsPerHour;
+
+  const _StatsGrid({
+    required this.peakHourlySteps,
+    required this.peakHourStart,
+    required this.activeHours,
+    required this.avgStepsPerHour,
+  });
+
+  String _fmtHour(DateTime? dt) {
+    if (dt == null) return "-";
+    final h = dt.hour.toString().padLeft(2, '0');
+    return "$h:00";
   }
 
-  String _formatType(HealthDataType type) {
-    return type.toString().split('.').last.replaceAll('_', ' ');
+  @override
+  Widget build(BuildContext context) {
+    final items = <_StatTileData>[
+      _StatTileData(
+        icon: Icons.show_chart,
+        label: "Peak hour",
+        value: _fmtHour(peakHourStart),
+      ),
+      _StatTileData(
+        icon: Icons.flash_on,
+        label: "Peak steps/hr",
+        value: "$peakHourlySteps",
+      ),
+      _StatTileData(
+        icon: Icons.timelapse,
+        label: "Active hours",
+        value: "$activeHours / 24",
+      ),
+      _StatTileData(
+        icon: Icons.av_timer,
+        label: "Avg steps/hr",
+        value: avgStepsPerHour.isNaN ? "0" : avgStepsPerHour.round().toString(),
+      ),
+    ];
+
+    return GridView.builder(
+      physics: const NeverScrollableScrollPhysics(),
+      shrinkWrap: true,
+      itemCount: items.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 2.4,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemBuilder: (context, index) => _StatTile(items[index]),
+    );
+  }
+}
+
+class _StatTileData {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _StatTileData({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+}
+
+class _StatTile extends StatelessWidget {
+  final _StatTileData data;
+  const _StatTile(this.data);
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        child: Row(
+          children: [
+            Icon(data.icon, color: cs.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.value,
+                    style: Theme.of(context).textTheme.titleLarge,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    data.label,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _StepsLineChart extends StatelessWidget {
+  final List<HourlySteps> hourly;
+  const _StepsLineChart({required this.hourly});
+
+  @override
+  Widget build(BuildContext context) {
+    if (hourly.isEmpty) {
+      return const Card(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text("No step data for the last 24 hours."),
+        ),
+      );
+    }
+
+    final maxY = hourly.map((e) => e.steps).fold<int>(0, (a, b) => a > b ? a : b);
+    final yTop = (maxY == 0) ? 10.0 : (maxY * 1.2);
+
+    final spots = <FlSpot>[];
+    for (int i = 0; i < hourly.length; i++) {
+      spots.add(FlSpot(i.toDouble(), hourly[i].steps.toDouble()));
+    }
+
+    String hourLabel(int idx) {
+      final dt = hourly[idx.clamp(0, hourly.length - 1)].hourStart;
+      return dt.hour.toString().padLeft(2, '0');
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 16, 12, 12),
+        child: SizedBox(
+          height: 220,
+          child: LineChart(
+            LineChartData(
+              minX: 0,
+              maxX: (hourly.length - 1).toDouble(),
+              minY: 0,
+              maxY: yTop,
+              gridData: const FlGridData(show: true),
+              borderData: FlBorderData(show: false),
+              titlesData: FlTitlesData(
+                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                leftTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    reservedSize: 40,
+                    interval: yTop <= 50 ? 10 : (yTop / 4),
+                    getTitlesWidget: (value, meta) {
+                      return Text(
+                        value.round().toString(),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      );
+                    },
+                  ),
+                ),
+                bottomTitles: AxisTitles(
+                  sideTitles: SideTitles(
+                    showTitles: true,
+                    interval: 6,
+                    getTitlesWidget: (value, meta) {
+                      final idx = value.round();
+                      if (idx < 0 || idx >= hourly.length) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(top: 8.0),
+                        child: Text(
+                          hourLabel(idx),
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+              lineTouchData: LineTouchData(
+                enabled: true,
+                touchTooltipData: LineTouchTooltipData(
+                  tooltipPadding: const EdgeInsets.all(8),
+                  getTooltipItems: (touchedSpots) {
+                    return touchedSpots.map((s) {
+                      final idx = s.x.round().clamp(0, hourly.length - 1);
+                      final h = hourLabel(idx);
+                      final steps = s.y.round();
+                      return LineTooltipItem(
+                        "$h:00  •  $steps steps",
+                        Theme.of(context).textTheme.bodySmall ?? const TextStyle(),
+                      );
+                    }).toList();
+                  },
+                ),
+              ),
+              lineBarsData: [
+                LineChartBarData(
+                  spots: spots,
+                  isCurved: true,
+                  barWidth: 3,
+                  dotData: const FlDotData(show: false),
+                  belowBarData: BarAreaData(show: true),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RawDataExpansion extends StatelessWidget {
+  final List<HealthDataPoint> points;
+  const _RawDataExpansion({required this.points});
+
+  @override
+  Widget build(BuildContext context) {
+    if (points.isEmpty) return const SizedBox.shrink();
+
+    final sorted = [...points]..sort((a, b) => b.dateFrom.compareTo(a.dateFrom));
+
+    return Card(
+      child: ExpansionTile(
+        title: const Text("Raw data (debug)"),
+        subtitle: Text("${sorted.length} records"),
+        children: [
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: sorted.length,
+            separatorBuilder: (_, __) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final p = sorted[index];
+              return ListTile(
+                dense: true,
+                leading: const Icon(Icons.bug_report_outlined),
+                title: Text(p.type.toString().split('.').last.replaceAll('_', ' ')),
+                subtitle: Text("${p.value}\n${p.dateFrom} → ${p.dateTo}"),
+                isThreeLine: true,
+              );
+            },
+          ),
+        ],
+      ),
+    );
   }
 }

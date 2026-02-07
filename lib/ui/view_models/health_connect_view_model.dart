@@ -4,6 +4,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:health/health.dart';
 
+/// Simple, UI-ready bucket of steps for a single hour.
+class HourlySteps {
+  final DateTime hourStart; // truncated to the hour
+  final int steps;
+
+  const HourlySteps({required this.hourStart, required this.steps});
+}
+
 class HealthConnectViewModel extends ChangeNotifier {
   final Health _health = Health();
 
@@ -21,13 +29,37 @@ class HealthConnectViewModel extends ChangeNotifier {
 
   bool _isAuthorized = false;
   bool _isLoading = false;
+
   int _steps = 0;
+
+  // Raw points (still available for debugging / drill-down).
   List<HealthDataPoint> _healthDataList = <HealthDataPoint>[];
+
+  // Aggregated stats for the last 24 hours.
+  List<HourlySteps> _hourlySteps = const <HourlySteps>[];
+  int _peakHourlySteps = 0;
+  DateTime? _peakHourStart;
+  int _activeHours = 0;
+  double _avgStepsPerHour = 0;
 
   bool get isAuthorized => _isAuthorized;
   bool get isLoading => _isLoading;
+
+  /// Total steps in the last 24 hours.
   int get steps => _steps;
+
+  /// Raw Health Connect points (useful for debugging).
   List<HealthDataPoint> get healthDataList => _healthDataList;
+
+  /// Hourly steps buckets for the last 24 hours (oldest -> newest).
+  List<HourlySteps> get hourlySteps => _hourlySteps;
+
+  int get peakHourlySteps => _peakHourlySteps;
+  DateTime? get peakHourStart => _peakHourStart;
+  int get activeHours => _activeHours;
+
+  /// Average steps per hour across the last 24 hours.
+  double get avgStepsPerHour => _avgStepsPerHour;
 
   bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
@@ -157,6 +189,8 @@ class HealthConnectViewModel extends ChangeNotifier {
       final total = await _health.getTotalStepsInInterval(start, now);
       _steps = total ?? 0;
 
+      _computeHourlyBuckets(start: start, end: now);
+
       debugPrint('Health data points: ${_healthDataList.length}');
       debugPrint('Steps (last 24h): $_steps');
     } catch (e, st) {
@@ -164,10 +198,76 @@ class HealthConnectViewModel extends ChangeNotifier {
       debugPrintStack(stackTrace: st);
       _healthDataList = <HealthDataPoint>[];
       _steps = 0;
+      _hourlySteps = const <HourlySteps>[];
+      _peakHourlySteps = 0;
+      _peakHourStart = null;
+      _activeHours = 0;
+      _avgStepsPerHour = 0;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _computeHourlyBuckets({required DateTime start, required DateTime end}) {
+    // Create 24 hourly buckets (oldest -> newest), aligned to the hour.
+    final startHour = DateTime(start.year, start.month, start.day, start.hour);
+    final buckets = <DateTime, int>{};
+
+    for (int i = 0; i < 24; i++) {
+      final h = startHour.add(Duration(hours: i));
+      buckets[h] = 0;
+    }
+
+    // Add points into buckets by their dateFrom hour.
+    for (final p in _healthDataList) {
+      if (p.type != HealthDataType.STEPS) continue;
+
+      final h = DateTime(
+        p.dateFrom.year,
+        p.dateFrom.month,
+        p.dateFrom.day,
+        p.dateFrom.hour,
+      );
+
+      if (!buckets.containsKey(h)) continue;
+
+      buckets[h] = (buckets[h] ?? 0) + _asIntSteps(p.value);
+    }
+
+    final list = buckets.entries.toList()
+      ..sort((a, b) => a.key.compareTo(b.key));
+
+    _hourlySteps = list
+        .map((e) => HourlySteps(hourStart: e.key, steps: e.value))
+        .toList(growable: false);
+
+    _peakHourlySteps = 0;
+    _peakHourStart = null;
+    _activeHours = 0;
+
+    int sum = 0;
+    for (final h in _hourlySteps) {
+      sum += h.steps;
+      if (h.steps > 0) _activeHours += 1;
+      if (h.steps > _peakHourlySteps) {
+        _peakHourlySteps = h.steps;
+        _peakHourStart = h.hourStart;
+      }
+    }
+
+    _avgStepsPerHour = _hourlySteps.isEmpty ? 0 : (sum / _hourlySteps.length);
+  }
+
+  int _asIntSteps(HealthValue value) {
+    if (value is NumericHealthValue) {
+      return value.numericValue.round();
+    }
+    // Fallback (rare for steps)
+    final raw = value.toString();
+    final match = RegExp(r'(-?\d+(\.\d+)?)').firstMatch(raw);
+    if (match == null) return 0;
+    return double.tryParse(match.group(1)!)?.round() ?? 0;
   }
 
   void reset() {
@@ -175,6 +275,11 @@ class HealthConnectViewModel extends ChangeNotifier {
     _isLoading = false;
     _steps = 0;
     _healthDataList = <HealthDataPoint>[];
+    _hourlySteps = const <HourlySteps>[];
+    _peakHourlySteps = 0;
+    _peakHourStart = null;
+    _activeHours = 0;
+    _avgStepsPerHour = 0;
     notifyListeners();
   }
 }
