@@ -1,4 +1,5 @@
 import 'package:diabetes_app/ui/screens/intro/intro_screen.dart';
+import 'package:diabetes_app/ui/view_models/menstrual_cycle_view_model.dart';
 import 'package:diabetes_app/ui/widgets/vibe/crt_overlay.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -35,6 +36,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => StatisticsViewModel()),
         ChangeNotifierProvider(create: (_) => HealthConnectViewModel()),
         ChangeNotifierProvider(create: (_) => AnalysisViewModel()),
+        ChangeNotifierProvider(create: (_) => CycleViewModel()),
       ],
       child: const MyApp(),
     ),
