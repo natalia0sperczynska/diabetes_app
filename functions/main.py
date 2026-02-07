@@ -11,7 +11,9 @@ import os
 
 initialize_app()
 set_global_options(max_instances=5)
-
+#w secrets master key - glowny klucz do szyfrowania
+#cryptograpy biblioteka python
+#zapis do firebase (hash) odczytywanie danych z master key
 
 LIBRE_TREND_ARROWS = {
     1: "falling_quickly",
