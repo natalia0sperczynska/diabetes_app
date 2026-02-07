@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import '../../services/auth_service.dart';
@@ -13,6 +15,8 @@ class AuthViewModel extends ChangeNotifier {
   AuthStatus _status = AuthStatus.loading;
   User? _user;
   String? _errorMessage;
+  UserModel? _userModel;
+  StreamSubscription<UserModel?>? _userSubscription;
 
   // Getters
   AuthStatus get status => _status;
@@ -20,6 +24,7 @@ class AuthViewModel extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _status == AuthStatus.authenticated;
   bool get isLoading => _status == AuthStatus.loading;
+  UserModel? get currentUser => _userModel;
 
   AuthViewModel() {
     _init();
@@ -36,9 +41,21 @@ class AuthViewModel extends ChangeNotifier {
       _user = user;
       if (user != null) {
         _status = AuthStatus.authenticated;
+        _listenToUserData(user.uid);
       } else {
+        _userModel = null;
         _status = AuthStatus.unauthenticated;
+        _userSubscription?.cancel();
       }
+      notifyListeners();
+    });
+  }
+  void _listenToUserData(String uid) {
+    _userSubscription?.cancel();
+
+    _userSubscription = _userService.getUserStream(uid).listen((userData) {
+      _userModel = userData;
+      print("AuthViewModel: User data received: ${_userModel?.gender}");
       notifyListeners();
     });
   }
@@ -104,7 +121,7 @@ class AuthViewModel extends ChangeNotifier {
       );
 
       await _userService.createUser(userModel);
-
+      _userModel = userModel;
       _status = AuthStatus.authenticated;
       notifyListeners();
       return true;
@@ -151,7 +168,10 @@ class AuthViewModel extends ChangeNotifier {
       notifyListeners();
 
       await _authService.signOut();
-
+      _userSubscription?.cancel();
+      _userSubscription = null;
+      _userModel = null;
+      _user = null;
       _status = AuthStatus.unauthenticated;
       _user = null;
       notifyListeners();
@@ -170,5 +190,10 @@ class AuthViewModel extends ChangeNotifier {
           : AuthStatus.unauthenticated;
     }
     notifyListeners();
+  }
+  @override
+  void dispose() {
+    _userSubscription?.cancel();
+    super.dispose();
   }
 }

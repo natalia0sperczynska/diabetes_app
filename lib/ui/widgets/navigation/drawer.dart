@@ -4,6 +4,7 @@ import '../../screens/analysis/analysis_screen.dart';
 import '../../screens/health/health_screen.dart';
 import '../../screens/profile/profile_screen.dart';
 import '../../screens/settings/settings_screen.dart';
+import '../../screens/menstrual_cycle/menstrual_cycle_screen.dart';
 import '../../view_models/home_view_model.dart';
 import '../../view_models/auth_view_model.dart';
 
@@ -13,6 +14,9 @@ class AppDrawer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HomeViewModel>();
+    final authViewModel = context.watch<AuthViewModel>();
+    final user = authViewModel.currentUser;
+    bool isFemale = user?.gender == 'Female';
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -75,6 +79,19 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
+            if (isFemale)
+            ListTile(
+              leading: const Icon(Icons.female),
+              title : const Text('Menstrual Cycle'),
+              selected: false,
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const MenstrualCycleScreen()),
+                );
+              },),
+
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
