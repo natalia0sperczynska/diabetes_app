@@ -123,7 +123,7 @@ class _DietScreenState extends State<DietScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             centerTitle: true,
-            leading: const BackButton(),
+            automaticallyImplyLeading: false,
             title: CyberGlitchText(
               'NUTRITION LOG',
               style: GoogleFonts.vt323(
