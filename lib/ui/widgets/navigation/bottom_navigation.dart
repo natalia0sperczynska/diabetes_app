@@ -31,42 +31,47 @@ class AppBottomNavigationBar extends StatelessWidget {
       buildIcon(Icons.stacked_bar_chart, 3),
     ];
 
-    return Stack(
-      clipBehavior: Clip.none,
-      alignment: Alignment.bottomCenter,
-      children: [
-      Positioned(
-      bottom: -20,
-      left: 0,
-      right: 0,
-      height: 80,
-      child: Container(
-        decoration: BoxDecoration(
-          gradient: RadialGradient(
-            center: const Alignment(0, 0.6),
-            radius: 1.0,
-            colors: [
-              neonColor.withOpacity(0.4),
-              Colors.transparent,
-            ],
-            stops: const [0.0, 0.7],
+    return SafeArea(
+      top: false,
+      maintainBottomViewPadding: true,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          Positioned(
+            bottom: -20,
+            left: 0,
+            right: 0,
+            height: 80,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, 0.6),
+                  radius: 1.0,
+                  colors: [
+                    neonColor.withOpacity(0.4),
+                    Colors.transparent,
+                  ],
+                  stops: const [0.0, 0.7],
+                ),
+              ),
+            ),
           ),
-        ),
+          CurvedNavigationBar(
+            items: items,
+            color: barColor,
+            height: 65.0,
+            backgroundColor: Colors.transparent,
+            buttonBackgroundColor: neonColor,
+            index: viewModel.selectedIndex,
+            animationCurve: Curves.easeInOutBack,
+            animationDuration: const Duration(milliseconds: 500),
+            onTap: (int index) {
+              context.read<HomeViewModel>().setIndex(index);
+            },
+          ),
+        ],
       ),
-    ),CurvedNavigationBar(
-      items: items,
-      color: barColor,
-      height: 65.0,
-      backgroundColor: Colors.transparent,
-      buttonBackgroundColor: neonColor,
-      index: viewModel.selectedIndex,
-      animationCurve: Curves.easeInOutBack,
-      animationDuration: const Duration(milliseconds: 500),
-      onTap: (int index) {
-        context.read<HomeViewModel>().setIndex(index);
-      },
-    ),
-    ],
     );
   }
 }
