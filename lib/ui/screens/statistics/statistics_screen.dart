@@ -208,10 +208,7 @@ class _StatsScreenState extends State<StatsScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             centerTitle: true,
-            leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
+            automaticallyImplyLeading: false,
             title: CyberGlitchText(
               'GLUCOSE MONITOR',
               style: GoogleFonts.vt323(
