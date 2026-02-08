@@ -18,8 +18,11 @@ class _MealDetailsDialogState extends State<MealDetailsDialog> {
   late double _baseProtein;
   late double _baseFat;
   late double _baseCarbs;
+  // ignore: unused_field
   late double _baseFiber;
+  // ignore: unused_field
   late double _baseSugars;
+  // ignore: unused_field
   late double _baseSalt;
 
   @override
