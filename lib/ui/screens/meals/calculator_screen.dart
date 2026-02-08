@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../../view_models/meal_view_model.dart';
+import '../../view_models/menstrual_cycle_view_model.dart';
 import '../../view_models/statistics_view_model.dart';
 import '../../screens/meals/services/meal_repository.dart';
 import '../../screens/meals/models/meal.dart';
@@ -268,10 +269,35 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   }
 
   Widget _buildResultHUD(ColorScheme colorScheme) {
+    final cycleVm = context.watch<CycleViewModel>();
+    final bool isHighResistance = cycleVm.isHighInsulinResistance;
     return CyberContainer(
-      borderColor: colorScheme.primary,
+      borderColor: isHighResistance ? AppColors.neonPink : colorScheme.primary,
       child: Column(
         children: [
+          if (cycleVm.currentPhase != CyclePhase.unknown)
+            Padding(
+              padding: const EdgeInsets.all(6.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isHighResistance ? Icons.bolt : Icons.shutter_speed,
+                    color: isHighResistance ? Colors.orange : colorScheme.secondary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    "${cycleVm.phaseName.toUpperCase()} ACTIVE",
+                    style: GoogleFonts.vt323(
+                      color: isHighResistance ? Colors.orange : colorScheme.secondary,
+                      fontSize: 14,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           Text(
             "SUGGESTED DOSE",
             style: GoogleFonts.iceland(
@@ -371,6 +397,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
   Widget _buildBioSection(ColorScheme colorScheme) {
     final bgVal = double.tryParse(_currentBgController.text) ?? 0;
     final bool isHigh = bgVal > 180;
+    final bool isLow = bgVal > 0 && bgVal < 70;
+
+    final Color statusColor = isHigh
+        ? colorScheme.error
+        : isLow
+        ? Colors.orange
+        : colorScheme.primary;
 
     return Row(
       children: [
@@ -380,13 +413,13 @@ class _CalculatorScreenState extends State<CalculatorScreen> {
             children: [
               Text(
                 "CURRENT BG",
-                style: GoogleFonts.iceland(fontSize: 18, fontWeight: FontWeight.bold, color: isHigh ? colorScheme.error : colorScheme.primary, letterSpacing: 1.2)
+                style: GoogleFonts.iceland(fontSize: 18, fontWeight: FontWeight.bold, color: statusColor, letterSpacing: 1.2)
               ),
               const SizedBox(height: 8),
               Container(
                 decoration: BoxDecoration(
                   color: colorScheme.surface,
-                  border: Border.all(color: isHigh ? colorScheme.error : colorScheme.primary, width: 2),
+                  border: Border.all(color: statusColor, width: 2),
                 ),
                 child: TextField(
                   controller: _currentBgController,
