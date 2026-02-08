@@ -4,6 +4,28 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:health/health.dart';
 
+/// Which data source (origin app) we want to display from Health Connect.
+///
+/// This does **not** change requested permissions — we still only ask for the
+/// same Health Connect READ_* permissions, and then filter the returned points
+/// by their data origin (package name / source).
+enum HealthConnectSource {
+  /// Do not filter by origin app.
+  all,
+
+  /// Filter to data written by Google Fit.
+  googleFit,
+
+  /// Filter to data written by Mi Fitness (Xiaomi Wear).
+  miFitness,
+}
+
+// Known Android package names for Health Connect data origins.
+// Google Fit (Play Store): com.google.android.apps.fitness
+// Mi Fitness (Play Store): com.xiaomi.wearable
+const String _kGoogleFitPackage = 'com.google.android.apps.fitness';
+const String _kMiFitnessPackage = 'com.xiaomi.wearable';
+
 /// Simple, UI-ready bucket of steps for a single hour.
 class HourlySteps {
   final DateTime hourStart; // truncated to the hour
@@ -14,6 +36,9 @@ class HourlySteps {
 
 class HealthConnectViewModel extends ChangeNotifier {
   final Health _health = Health();
+
+  /// Selected origin filter.
+  final HealthConnectSource source;
 
   // Android native channel for Health Connect permissions
   static const MethodChannel _hcChannel =
@@ -63,11 +88,40 @@ class HealthConnectViewModel extends ChangeNotifier {
 
   bool get _isAndroid => !kIsWeb && Platform.isAndroid;
 
-  HealthConnectViewModel() {
+  /// Backwards-compatible constructor.
+  ///
+  /// Existing code can keep calling `HealthConnectViewModel()`.
+  HealthConnectViewModel({this.source = HealthConnectSource.all}) {
     if (_isAndroid) {
       debugPrint('Android detected — using Health Connect');
     } else {
       debugPrint('Not Android — Health Connect not used');
+    }
+  }
+
+  /// Human label for the current origin filter.
+  String get sourceLabel {
+    switch (source) {
+      case HealthConnectSource.googleFit:
+        return 'Google Fit';
+      case HealthConnectSource.miFitness:
+        return 'Mi Fitness';
+      case HealthConnectSource.all:
+        return 'All sources';
+    }
+  }
+
+  /// Whether we are filtering to a specific origin app.
+  bool get isSourceFiltered => source != HealthConnectSource.all;
+
+  String? get _sourcePackage {
+    switch (source) {
+      case HealthConnectSource.googleFit:
+        return _kGoogleFitPackage;
+      case HealthConnectSource.miFitness:
+        return _kMiFitnessPackage;
+      case HealthConnectSource.all:
+        return null;
     }
   }
 
@@ -121,22 +175,18 @@ class HealthConnectViewModel extends ChangeNotifier {
       }
 
       // 1) Check permissions via plugin
-      bool hasPerms = (await _health.hasPermissions(
-        _types,
-        permissions: _permissions,
-      )) ==
-          true;
+      bool hasPerms =
+          (await _health.hasPermissions(_types, permissions: _permissions)) ==
+              true;
       debugPrint('Health Connect hasPermissions (plugin) = $hasPerms');
 
       // 2) If missing -> native flow first
       if (!hasPerms) {
         await _requestNativeHealthConnectPermissions();
 
-        hasPerms = (await _health.hasPermissions(
-          _types,
-          permissions: _permissions,
-        )) ==
-            true;
+        hasPerms =
+            (await _health.hasPermissions(_types, permissions: _permissions)) ==
+                true;
 
         debugPrint('Health Connect hasPermissions AFTER native = $hasPerms');
       }
@@ -184,10 +234,22 @@ class HealthConnectViewModel extends ChangeNotifier {
         types: _types,
       );
 
-      _healthDataList = points;
+      // De-duplicate (plugin may return duplicates on some devices/sources).
+      final unique = _dedupe(points);
 
-      final total = await _health.getTotalStepsInInterval(start, now);
-      _steps = total ?? 0;
+      // Filter by data origin (Google Fit / Mi Fitness) if requested.
+      final filtered = _filterBySource(unique);
+      _healthDataList = filtered;
+
+      // Total steps:
+      // - For "All sources" we keep the existing plugin method (best behaviour).
+      // - For a filtered source we sum points because the plugin total cannot be filtered.
+      if (!isSourceFiltered) {
+        final total = await _health.getTotalStepsInInterval(start, now);
+        _steps = total ?? 0;
+      } else {
+        _steps = _sumStepsFromPoints(filtered);
+      }
 
       _computeHourlyBuckets(start: start, end: now);
 
@@ -207,6 +269,88 @@ class HealthConnectViewModel extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  List<HealthDataPoint> _dedupe(List<HealthDataPoint> points) {
+    final seen = <String>{};
+    final out = <HealthDataPoint>[];
+
+    for (final p in points) {
+      // Key based on timestamps, type, numeric value, and source.
+      final sourceId = _getSourceId(p) ?? '';
+      final val = p.type == HealthDataType.STEPS
+          ? _asIntSteps(p.value)
+          : p.value.toString();
+      final key =
+          '${p.type}|${p.dateFrom.millisecondsSinceEpoch}|${p.dateTo.millisecondsSinceEpoch}|$val|$sourceId';
+      if (seen.add(key)) out.add(p);
+    }
+
+    return out;
+  }
+
+  List<HealthDataPoint> _filterBySource(List<HealthDataPoint> points) {
+    final pkg = _sourcePackage;
+    if (pkg == null) return points;
+
+    return points.where((p) => _matchesSource(p, pkg)).toList(growable: false);
+  }
+
+  bool _matchesSource(HealthDataPoint p, String pkg) {
+    final id = (_getSourceId(p) ?? '').toLowerCase();
+    final target = pkg.toLowerCase();
+
+    // Common: exact match with package name.
+    if (id == target) return true;
+
+    // Some implementations append extra information after ':'
+    // e.g. "com.google.android.apps.fitness:..."
+    if (id.startsWith('$target:')) return true;
+
+    // Some devices may include a longer prefix; keep it tolerant.
+    if (id.startsWith(target)) return true;
+
+    final name = (_getSourceName(p) ?? '').toLowerCase();
+    if (target == _kGoogleFitPackage) {
+      return name.contains('google') && name.contains('fit');
+    }
+    if (target == _kMiFitnessPackage) {
+      // Mi Fitness is sometimes shown as Xiaomi Wear / Mi Fitness.
+      return (name.contains('mi') && name.contains('fitness')) ||
+          name.contains('xiaomi') ||
+          name.contains('wear');
+    }
+    return false;
+  }
+
+  String? _getSourceId(HealthDataPoint p) {
+    // `health` plugin fields differ across versions; use dynamic access safely.
+    try {
+      final v = (p as dynamic).sourceId;
+      if (v is String) return v;
+      return v?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String? _getSourceName(HealthDataPoint p) {
+    try {
+      final v = (p as dynamic).sourceName;
+      if (v is String) return v;
+      return v?.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  int _sumStepsFromPoints(List<HealthDataPoint> points) {
+    int sum = 0;
+    for (final p in points) {
+      if (p.type != HealthDataType.STEPS) continue;
+      sum += _asIntSteps(p.value);
+    }
+    return sum;
   }
 
   void _computeHourlyBuckets({required DateTime start, required DateTime end}) {
@@ -235,8 +379,7 @@ class HealthConnectViewModel extends ChangeNotifier {
       buckets[h] = (buckets[h] ?? 0) + _asIntSteps(p.value);
     }
 
-    final list = buckets.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
+    final list = buckets.entries.toList()..sort((a, b) => a.key.compareTo(b.key));
 
     _hourlySteps = list
         .map((e) => HourlySteps(hourStart: e.key, steps: e.value))
