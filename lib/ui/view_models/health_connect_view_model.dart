@@ -316,7 +316,9 @@ class HealthConnectViewModel extends ChangeNotifier {
       // avoids EXERCISE_TIME which is not available everywhere.
       _movingMinutes = _movingMinutesFromSteps(_healthDataList);
 
-      _sleepDuration = _sumSleepDuration(filtered);
+      // Sleep: choose the longest merged sleep session in last 24h
+      // (Mi Fitness-like "main sleep", avoids double counting/overlaps).
+      _sleepDuration = _bestSleepSessionDuration(filtered);
 
       _latestHeartRateBpm = _latestValue(filtered, HealthDataType.HEART_RATE);
       _latestBloodOxygenPercent =
@@ -344,7 +346,7 @@ class HealthConnectViewModel extends ChangeNotifier {
     return sum.round();
   }
 
-  /// Approximation: count distinct minutes covered by step records.
+  /// Approximation: count distinct minutes covered by step records (steps > 0).
   /// Bounded to 24h = 1440 minutes.
   int _movingMinutesFromSteps(List<HealthDataPoint> stepPoints) {
     final activeMinutes = <DateTime>{};
@@ -352,13 +354,11 @@ class HealthConnectViewModel extends ChangeNotifier {
     for (final p in stepPoints) {
       if (p.type != HealthDataType.STEPS) continue;
 
-      // If a point has 0 steps, skip it (common for some providers).
       final s = _asIntSteps(p.value);
       if (s <= 0) continue;
 
       DateTime t = p.dateFrom;
 
-      // Add minute buckets until dateTo (capped by 24h).
       while (t.isBefore(p.dateTo)) {
         activeMinutes.add(DateTime(t.year, t.month, t.day, t.hour, t.minute));
         if (activeMinutes.length >= 24 * 60) break;
@@ -371,29 +371,64 @@ class HealthConnectViewModel extends ChangeNotifier {
     return activeMinutes.length;
   }
 
-  Duration _sumSleepDuration(List<HealthDataPoint> points) {
-    final sessions = points.where((p) => p.type == HealthDataType.SLEEP_SESSION);
-    Duration total = Duration.zero;
+  /// Mi Fitness-like: pick the longest sleep interval (main sleep) in last 24h.
+  /// Steps:
+  /// - Prefer SLEEP_SESSION intervals when present
+  /// - Else use stage intervals
+  /// - Merge overlaps
+  /// - Pick the longest merged interval
+  Duration _bestSleepSessionDuration(List<HealthDataPoint> points) {
+    final sessions =
+    points.where((p) => p.type == HealthDataType.SLEEP_SESSION).toList();
+
+    final intervals = <_Interval>[];
 
     if (sessions.isNotEmpty) {
       for (final p in sessions) {
-        total += p.dateTo.difference(p.dateFrom);
+        intervals.add(_Interval(p.dateFrom, p.dateTo));
       }
-      return total;
+    } else {
+      const stageTypes = <HealthDataType>{
+        HealthDataType.SLEEP_ASLEEP,
+        HealthDataType.SLEEP_LIGHT,
+        HealthDataType.SLEEP_DEEP,
+        HealthDataType.SLEEP_REM,
+      };
+      for (final p in points) {
+        if (!stageTypes.contains(p.type)) continue;
+        intervals.add(_Interval(p.dateFrom, p.dateTo));
+      }
     }
 
-    const stageTypes = <HealthDataType>{
-      HealthDataType.SLEEP_ASLEEP,
-      HealthDataType.SLEEP_LIGHT,
-      HealthDataType.SLEEP_DEEP,
-      HealthDataType.SLEEP_REM,
-    };
+    if (intervals.isEmpty) return Duration.zero;
 
-    for (final p in points) {
-      if (!stageTypes.contains(p.type)) continue;
-      total += p.dateTo.difference(p.dateFrom);
+    intervals.sort((a, b) => a.start.compareTo(b.start));
+
+    final merged = <_Interval>[];
+    var cur = intervals.first;
+
+    for (int i = 1; i < intervals.length; i++) {
+      final it = intervals[i];
+
+      // overlap or touch
+      if (!it.start.isAfter(cur.end)) {
+        final newEnd = it.end.isAfter(cur.end) ? it.end : cur.end;
+        cur = _Interval(cur.start, newEnd);
+      } else {
+        merged.add(cur);
+        cur = it;
+      }
     }
-    return total;
+    merged.add(cur);
+
+    Duration best = Duration.zero;
+    for (final m in merged) {
+      final d = m.end.difference(m.start);
+      if (d > best) best = d;
+    }
+
+    if (best > const Duration(hours: 24)) return const Duration(hours: 24);
+    return best;
   }
 
   double? _latestValue(List<HealthDataPoint> points, HealthDataType type) {
@@ -453,7 +488,9 @@ class HealthConnectViewModel extends ChangeNotifier {
     if (id.startsWith(target)) return true;
 
     final name = (_getSourceName(p) ?? '').toLowerCase();
-    if (target == _kGoogleFitPackage) return name.contains('google') && name.contains('fit');
+    if (target == _kGoogleFitPackage) {
+      return name.contains('google') && name.contains('fit');
+    }
     if (target == _kMiFitnessPackage) {
       return (name.contains('mi') && name.contains('fitness')) ||
           name.contains('xiaomi') ||
@@ -565,4 +602,10 @@ class HealthConnectViewModel extends ChangeNotifier {
 
     notifyListeners();
   }
+}
+
+class _Interval {
+  final DateTime start;
+  final DateTime end;
+  _Interval(this.start, this.end);
 }
