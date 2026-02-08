@@ -2,36 +2,30 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.diabetes_app">
 
-    <!-- If your code/plugin checks Health Connect install/availability, Android 11+ may require package visibility -->
+    <!-- Package visibility for Health Connect permission flow -->
     <queries>
-        <!-- Health Connect controller permission flow -->
         <intent>
             <action android:name="android.health.connect.action.REQUEST_HEALTH_PERMISSIONS" />
         </intent>
 
-        <!-- Some devices check the Health Connect controller package -->
         <package android:name="com.google.android.healthconnect.controller" />
     </queries>
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Health Connect permissions (declare what you actually request in code) -->
+    <!-- Health Connect permissions -->
     <uses-permission android:name="android.permission.health.READ_STEPS" />
-    <uses-permission android:name="android.permission.health.READ_EXERCISE_ROUTES" />
-
-    <!-- If you later request more, add them here, e.g.
-    <uses-permission android:name="android.permission.health.READ_BLOOD_GLUCOSE" />
-    <uses-permission android:name="android.permission.health.WRITE_BLOOD_GLUCOSE" />
+    <uses-permission android:name="android.permission.health.READ_ACTIVE_CALORIES_BURNED" />
+    <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
-    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
-    -->
+    <uses-permission android:name="android.permission.health.READ_OXYGEN_SATURATION" />
+    <uses-permission android:name="android.permission.health.READ_EXERCISE_ROUTES" />
 
     <application
         android:name="${applicationName}"
         android:label="diabetes_app"
         android:icon="@mipmap/ic_launcher">
 
-        <!-- Flutter entry activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -51,7 +45,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Health Connect: rationale screen (Health Connect launches this if user taps “Why/Privacy”) -->
+        <!-- Health Connect: rationale screen -->
         <activity
             android:name=".PermissionsRationaleActivity"
             android:exported="true">
@@ -61,7 +55,7 @@
             </intent-filter>
         </activity>
 
-        <!-- Health Connect (Android 14+): REQUIRED alias (this is the piece you were missing) -->
+        <!-- Health Connect android 14 -->
         <activity-alias
             android:name=".ViewPermissionUsageActivity"
             android:exported="true"
