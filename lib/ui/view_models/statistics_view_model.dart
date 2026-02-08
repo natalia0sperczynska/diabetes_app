@@ -14,17 +14,27 @@ class StatisticsViewModel extends ChangeNotifier {
   DateTime get selectedDate => _selectedDate;
 
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _userEmail = 'anniefocused@gmail.com';
+  String _userEmail = 'anniefocused@gmail.com';
 
-  StatisticsViewModel() : _selectedDate = DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day) {
+  StatisticsViewModel()
+      : _selectedDate = DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day) {
     fetchGlucoseData();
+  }
+
+  /// Update the email used to query Glucose_measurements.
+  void setUserEmail(String email) {
+    if (_userEmail != email) {
+      _userEmail = email;
+      fetchGlucoseData();
+    }
   }
 
   void updateSelectedDate(DateTime date) {
     _selectedDate = DateTime(date.year, date.month, date.day);
     fetchGlucoseData();
   }
-  
+
   void previousDay() {
     updateSelectedDate(_selectedDate.subtract(const Duration(days: 1)));
   }
@@ -52,7 +62,8 @@ class StatisticsViewModel extends ChangeNotifier {
           .collection('Glucose_measurements')
           .doc(_userEmail)
           .collection('history')
-          .where('Timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('Timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
           .where('Timestamp', isLessThan: Timestamp.fromDate(endOfDay))
           .orderBy('Timestamp', descending: false)
           .get();
@@ -63,22 +74,22 @@ class StatisticsViewModel extends ChangeNotifier {
         final data = doc.data();
         if (data.containsKey('Glucose') && data.containsKey('Timestamp')) {
           final double glucose = (data['Glucose'] as num).toDouble();
-          
+
           DateTime timestamp;
           if (data['Timestamp'] is Timestamp) {
             timestamp = (data['Timestamp'] as Timestamp).toDate();
           } else if (data['Timestamp'] is String) {
-             timestamp = DateTime.tryParse(data['Timestamp']) ?? DateTime.now();
+            timestamp = DateTime.tryParse(data['Timestamp']) ?? DateTime.now();
           } else {
             continue;
           }
 
           final double xValue = timestamp.hour + (timestamp.minute / 60.0);
-          
+
           spots.add(FlSpot(xValue, glucose));
         }
       }
-      
+
       spots.sort((a, b) => a.x.compareTo(b.x));
 
       _glucoseSpots = spots;

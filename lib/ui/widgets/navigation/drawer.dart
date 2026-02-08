@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../screens/analysis/analysis_screen.dart';
+import '../../screens/doctor/doctor_screen.dart';
 import '../../screens/health/health_screen.dart';
 import '../../screens/profile/profile_screen.dart';
 import '../../screens/settings/settings_screen.dart';
 import '../../screens/menstrual_cycle/menstrual_cycle_screen.dart';
 import '../../view_models/home_view_model.dart';
 import '../../view_models/auth_view_model.dart';
+import '../../view_models/doctor_view_model.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -22,7 +24,8 @@ class AppDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: BoxDecoration(color: Theme.of(context).colorScheme.primary),
+            decoration:
+                BoxDecoration(color: Theme.of(context).colorScheme.primary),
             child: const Text(
               'Menu',
               style: TextStyle(color: Colors.white, fontSize: 24),
@@ -86,7 +89,23 @@ class AppDrawer extends StatelessWidget {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const MenstrualCycleScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const MenstrualCycleScreen()),
+                );
+              },
+            ),
+          if (user?.isDoctor == true)
+            ListTile(
+              leading: const Icon(Icons.medical_services),
+              title: const Text('Doctor Panel'),
+              selected: false,
+              onTap: () {
+                Navigator.pop(context);
+                final doctorVm = context.read<DoctorViewModel>();
+                doctorVm.loadPatients(user!);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DoctorScreen()),
                 );
               },
             ),

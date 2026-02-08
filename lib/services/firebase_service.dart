@@ -7,7 +7,10 @@ import '../data/model/DailyStats.dart';
 
 class FirebaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final String _userEmail = 'anniefocused@gmail.com';
+  final String _userEmail;
+
+  FirebaseService({String? userEmail})
+      : _userEmail = userEmail ?? 'anniefocused@gmail.com';
 
   final String _rawCollection = 'history';
   final String _aggregatesCollection = 'daily_aggregates';
