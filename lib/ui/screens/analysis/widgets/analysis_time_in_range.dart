@@ -26,18 +26,26 @@ class AnalysisTimeInRange extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final primaryBlue = Colors.blueAccent;
 
-    final sections = <PieChartSectionData>[
-      if (inRange > 0) _section(AppColors.green, inRange, '${inRange.toInt()}%'),
-      if (veryHigh > 0) _section(Colors.orange[900]!, veryHigh, '${veryHigh.toInt()}%'),
-      if (high > 0) _section(Colors.orangeAccent, high, '${high.toInt()}%'),
-      if (low > 0) _section(Colors.redAccent, low, '${low.toInt()}%'),
-      if (veryLow > 0) _section(const Color(0xFF8B0000), veryLow, '${veryLow.toInt()}%'),
+    // tu ukrywam sekcje ktora sa mniejsze niz 3% zeby na siebie nie najezdzaly
+    bool shouldShow(double value) => value > 3.0;
+
+    final List<PieChartSectionData> activeSections = [
+      if (shouldShow(inRange))
+        _section(AppColors.green, inRange, '${inRange.toInt()}%'),
+      if (shouldShow(veryHigh))
+        _section(Colors.orange[900]!, veryHigh, '${veryHigh.toInt()}%'),
+      if (shouldShow(high))
+        _section(Colors.orangeAccent, high, '${high.toInt()}%'),
+      if (shouldShow(low))
+        _section(Colors.redAccent, low, '${low.toInt()}%'),
+      if (shouldShow(veryLow))
+        _section(const Color(0xFF8B0000), veryLow, '${veryLow.toInt()}%'),
     ];
 
     return AnalysisContainer(
       color: primaryBlue,
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Row(
           children: [
             Expanded(
@@ -46,27 +54,27 @@ class AnalysisTimeInRange extends StatelessWidget {
                 height: 180,
                 child: PieChart(
                   PieChartData(
-                    sectionsSpace: 4,
+                    sectionsSpace: 2,
                     centerSpaceRadius: 35,
-                    sections: sections,
+                    sections: activeSections,
                   ),
                 ),
               ),
             ),
 
-            const SizedBox(width: 35),
+            const SizedBox(width: 40),
 
             Expanded(
               flex: 5,
               child: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: ShapeDecoration(
-                  color: colorScheme.surface.withOpacity(0.5),
+                  color: colorScheme.surface.withOpacity(0.4),
                   shape: BeveledRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
                     side: BorderSide(
-                        color: primaryBlue.withOpacity(0.4),
-                        width: 1
+                      color: primaryBlue.withOpacity(0.5),
+                      width: 1.5,
                     ),
                   ),
                 ),
@@ -82,7 +90,7 @@ class AnalysisTimeInRange extends StatelessWidget {
                         color: primaryBlue,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 10),
                     _buildLegendItem(Colors.orange[900]!, "Very High (>250)"),
                     _buildLegendItem(Colors.orangeAccent, "High (181-250)"),
                     _buildLegendItem(AppColors.green, "Target (70-180)"),
@@ -114,7 +122,7 @@ class AnalysisTimeInRange extends StatelessWidget {
 
   Widget _buildLegendItem(Color color, String label) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 3),
+      padding: const EdgeInsets.symmetric(vertical: 2.5),
       child: Row(
         children: [
           Container(width: 8, height: 8, color: color),
@@ -122,7 +130,10 @@ class AnalysisTimeInRange extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: GoogleFonts.iceland(fontSize: 13, color: Colors.white70),
+              style: GoogleFonts.iceland(
+                  fontSize: 13,
+                  color: Colors.white.withOpacity(0.8)
+              ),
               overflow: TextOverflow.ellipsis,
             ),
           ),
