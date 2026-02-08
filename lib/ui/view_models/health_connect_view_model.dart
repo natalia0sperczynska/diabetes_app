@@ -52,7 +52,6 @@ class HealthConnectViewModel extends ChangeNotifier {
     HealthDataType.SLEEP_REM,
 
     // Vitals
-    HealthDataType.HEART_RATE,
     HealthDataType.BLOOD_OXYGEN,
   ];
 
@@ -72,7 +71,6 @@ class HealthConnectViewModel extends ChangeNotifier {
   int _caloriesKcal = 0;
   int _movingMinutes = 0;
   Duration _sleepDuration = Duration.zero;
-  double? _latestHeartRateBpm;
   double? _latestBloodOxygenPercent;
   bool _hasAdditionalPermissions = false;
 
@@ -91,7 +89,6 @@ class HealthConnectViewModel extends ChangeNotifier {
   int get caloriesKcal => _caloriesKcal;
   int get movingMinutes => _movingMinutes;
   Duration get sleepDuration => _sleepDuration;
-  double? get latestHeartRateBpm => _latestHeartRateBpm;
   double? get latestBloodOxygenPercent => _latestBloodOxygenPercent;
   bool get hasAdditionalPermissions => _hasAdditionalPermissions;
 
@@ -320,7 +317,6 @@ class HealthConnectViewModel extends ChangeNotifier {
       // (Mi Fitness-like "main sleep", avoids double counting/overlaps).
       _sleepDuration = _bestSleepSessionDuration(filtered);
 
-      _latestHeartRateBpm = _latestValue(filtered, HealthDataType.HEART_RATE);
       _latestBloodOxygenPercent =
           _normalizeSpo2(_latestValue(filtered, HealthDataType.BLOOD_OXYGEN));
 
@@ -331,7 +327,6 @@ class HealthConnectViewModel extends ChangeNotifier {
       _caloriesKcal = 0;
       _movingMinutes = 0;
       _sleepDuration = Duration.zero;
-      _latestHeartRateBpm = null;
       _latestBloodOxygenPercent = null;
       notifyListeners();
     }
@@ -596,7 +591,6 @@ class HealthConnectViewModel extends ChangeNotifier {
     _caloriesKcal = 0;
     _movingMinutes = 0;
     _sleepDuration = Duration.zero;
-    _latestHeartRateBpm = null;
     _latestBloodOxygenPercent = null;
     _hasAdditionalPermissions = false;
 

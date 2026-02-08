@@ -285,7 +285,7 @@ class _MiFitnessDashboardTab extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Tiles (no blood pressure)
+          // Tiles (no blood pressure / no heart rate)
           Row(
             children: [
               Expanded(
@@ -301,25 +301,6 @@ class _MiFitnessDashboardTab extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: _TileCard(
-                  icon: Icons.favorite_border,
-                  title: "Heart rate",
-                  value: vm.latestHeartRateBpm == null
-                      ? "-"
-                      : "${vm.latestHeartRateBpm!.round()} BPM",
-                  subtitle: "",
-                  locked: !vm.hasAdditionalPermissions,
-                  onEnable: vm.requestAdditionalPermissions,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _TileCard(
                   icon: Icons.bloodtype_outlined,
                   title: "Blood oxygen",
                   value: vm.latestBloodOxygenPercent == null
@@ -330,10 +311,17 @@ class _MiFitnessDashboardTab extends StatelessWidget {
                   onEnable: vm.requestAdditionalPermissions,
                 ),
               ),
-              const SizedBox(width: 12),
-              const Expanded(child: SizedBox.shrink()),
             ],
           ),
+
+          const SizedBox(height: 16),
+
+          const _SectionHeader(
+            title: "STEPS (LAST 24H)",
+            subtitle: "Hourly total",
+          ),
+          const SizedBox(height: 10),
+          _StepsLineChart(hourly: vm.hourlySteps),
 
           const SizedBox(height: 12),
 
@@ -343,7 +331,7 @@ class _MiFitnessDashboardTab extends StatelessWidget {
               child: Text(
                 vm.hasAdditionalPermissions
                     ? "Pull down to refresh. Data is filtered to Mi Fitness origin in Health Connect."
-                    : "Sleep/Heart rate/Blood oxygen require additional Health Connect read permissions. "
+                    : "Sleep/Blood oxygen require additional Health Connect read permissions. "
                     "They are requested only after you tap Enable.",
               ),
             ),
