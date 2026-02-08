@@ -10,15 +10,26 @@ enum HealthConnectSource {
   miFitness,
 }
 
-// Known Android package names for Health Connect data origins.
+// Origins
 const String _kGoogleFitPackage = 'com.google.android.apps.fitness';
-const String _kMiFitnessPackage = 'com.xiaomi.wearable';
+
+// Xiaomi/Mi ecosystem can have multiple origins depending on region/app version.
+const List<String> _kMiFitnessPackages = <String>[
+  'com.xiaomi.wearable',     // Mi Fitness (common)
+  'com.xiaomi.hm.health',    // legacy Mi Fit / Zepp Life (sometimes)
+  'com.mi.health',           // Xiaomi Health (sometimes)
+];
 
 class HourlySteps {
   final DateTime hourStart; // truncated to the hour
   final int steps;
-
   const HourlySteps({required this.hourStart, required this.steps});
+}
+
+class HrSample {
+  final DateTime time;
+  final double bpm;
+  const HrSample({required this.time, required this.bpm});
 }
 
 class HealthConnectViewModel extends ChangeNotifier {
@@ -28,19 +39,16 @@ class HealthConnectViewModel extends ChangeNotifier {
   static const MethodChannel _hcChannel =
   MethodChannel('health_connect_permissions');
 
-  // Plugin requires: permissions list length == types length.
   List<HealthDataAccess> _readPermsFor(List<HealthDataType> types) =>
       List<HealthDataAccess>.filled(types.length, HealthDataAccess.READ);
 
-  /// Base scope (safe / non-sensitive): steps only.
+  // Base scope (safe / non-sensitive): steps only.
   static const List<HealthDataType> _baseTypes = <HealthDataType>[
     HealthDataType.STEPS,
   ];
 
-  /// Extra types for Mi Fitness dashboard.
-  /// NOTE: EXERCISE_TIME removed because on some devices/emulators
-  /// Health Connect doesn't expose it and the plugin throws:
-  /// "Datatype EXERCISE_TIME not found in HC"
+  // Extra types for Mi Fitness dashboard.
+  // EXERCISE_TIME removed due to “Datatype … not found in HC” on some builds.
   static const List<HealthDataType> _extraTypes = <HealthDataType>[
     HealthDataType.ACTIVE_ENERGY_BURNED,
 
@@ -72,9 +80,13 @@ class HealthConnectViewModel extends ChangeNotifier {
   int _caloriesKcal = 0;
   int _movingMinutes = 0;
   Duration _sleepDuration = Duration.zero;
-  double? _latestHeartRateBpm;
+  double? _latestHeartRateBpm; // latest from plugin points (may be null)
   double? _latestBloodOxygenPercent;
   bool _hasAdditionalPermissions = false;
+
+  // NEW: HR series for chart (from native Health Connect read HeartRateRecord)
+  List<HrSample> _hrSeries = const <HrSample>[];
+  List<HrSample> get hrSeries => _hrSeries;
 
   bool get isAuthorized => _isAuthorized;
   bool get isLoading => _isLoading;
@@ -99,12 +111,13 @@ class HealthConnectViewModel extends ChangeNotifier {
   bool get _isMiFitness => source == HealthConnectSource.miFitness;
   bool get isSourceFiltered => source != HealthConnectSource.all;
 
-  String? get _sourcePackage {
+  String? get _sourcePackageSingle {
     switch (source) {
       case HealthConnectSource.googleFit:
         return _kGoogleFitPackage;
       case HealthConnectSource.miFitness:
-        return _kMiFitnessPackage;
+      // NOTE: We filter Mi by multiple packages; this is used only by simple callers.
+        return _kMiFitnessPackages.first;
       case HealthConnectSource.all:
         return null;
     }
@@ -119,6 +132,7 @@ class HealthConnectViewModel extends ChangeNotifier {
     await _refreshAdditionalPermissionState();
     if (_isMiFitness && _hasAdditionalPermissions) {
       await fetchMiDashboardExtrasLast24h();
+      await fetchMiHeartRateSeriesLast24h(); // NEW
     }
   }
 
@@ -154,6 +168,7 @@ class HealthConnectViewModel extends ChangeNotifier {
 
       if (_hasAdditionalPermissions && _isAuthorized) {
         await fetchMiDashboardExtrasLast24h();
+        await fetchMiHeartRateSeriesLast24h(); // NEW
       }
     } catch (e, st) {
       debugPrint('requestAdditionalPermissions error: $e');
@@ -165,7 +180,7 @@ class HealthConnectViewModel extends ChangeNotifier {
     }
   }
 
-  /// Native request for minimal permission (READ_STEPS) via your Kotlin handler.
+  /// Native request for minimal permission (READ_STEPS) via Kotlin handler.
   Future<bool> _requestNativeHealthConnectPermissions() async {
     if (!_isAndroid) return false;
 
@@ -238,6 +253,7 @@ class HealthConnectViewModel extends ChangeNotifier {
         await fetchStepsLast24h();
         if (_isMiFitness && _hasAdditionalPermissions) {
           await fetchMiDashboardExtrasLast24h();
+          await fetchMiHeartRateSeriesLast24h(); // NEW
         }
       }
     } catch (e, st) {
@@ -312,17 +328,17 @@ class HealthConnectViewModel extends ChangeNotifier {
 
       _caloriesKcal = _sumCaloriesKcal(filtered);
 
-      // Moving minutes computed from STEPS points (already filtered by source) —
-      // avoids EXERCISE_TIME which is not available everywhere.
+      // Moving minutes from step points (already filtered by source)
       _movingMinutes = _movingMinutesFromSteps(_healthDataList);
 
-      // Sleep: choose the longest merged sleep session in last 24h
-      // (Mi Fitness-like "main sleep", avoids double counting/overlaps).
+      // Sleep: main sleep (longest merged interval)
       _sleepDuration = _bestSleepSessionDuration(filtered);
 
-      _latestHeartRateBpm = _latestValue(filtered, HealthDataType.HEART_RATE);
+      // Latest HR from plugin points (often null with Mi Fitness)
+      _latestHeartRateBpm = _latestValueByDateFrom(filtered, HealthDataType.HEART_RATE);
+
       _latestBloodOxygenPercent =
-          _normalizeSpo2(_latestValue(filtered, HealthDataType.BLOOD_OXYGEN));
+          _normalizeSpo2(_latestValueByDateFrom(filtered, HealthDataType.BLOOD_OXYGEN));
 
       notifyListeners();
     } catch (e, st) {
@@ -337,6 +353,69 @@ class HealthConnectViewModel extends ChangeNotifier {
     }
   }
 
+  /// NEW: Fetch HR series (HeartRateRecord samples) via native HC read.
+  /// This is what you need for the chart like Mi Fitness.
+  Future<void> fetchMiHeartRateSeriesLast24h() async {
+    if (!_isAndroid || !_isMiFitness || !_hasAdditionalPermissions) {
+      _hrSeries = const <HrSample>[];
+      notifyListeners();
+      return;
+    }
+
+    final now = DateTime.now();
+    final start = now.subtract(const Duration(hours: 24));
+
+    try {
+      final raw = await _hcChannel.invokeMethod<List<dynamic>>(
+        'readHeartRateSeries',
+        <String, dynamic>{
+          'startMillis': start.millisecondsSinceEpoch,
+          'endMillis': now.millisecondsSinceEpoch,
+          'allowedPackages': _kMiFitnessPackages,
+        },
+      );
+
+      final samples = <HrSample>[];
+
+      if (raw != null) {
+        for (final item in raw) {
+          if (item is Map) {
+            final t = item['t'];
+            final bpm = item['bpm'];
+            if (t is int && (bpm is num)) {
+              samples.add(
+                HrSample(
+                  time: DateTime.fromMillisecondsSinceEpoch(t),
+                  bpm: bpm.toDouble(),
+                ),
+              );
+            }
+          }
+        }
+      }
+
+      samples.sort((a, b) => a.time.compareTo(b.time));
+      _hrSeries = samples;
+
+      // Optional: if plugin HR is null, set latest from series
+      if (_latestHeartRateBpm == null && _hrSeries.isNotEmpty) {
+        _latestHeartRateBpm = _hrSeries.last.bpm;
+      }
+
+      notifyListeners();
+    } on PlatformException catch (e, st) {
+      debugPrint('fetchMiHeartRateSeriesLast24h PlatformException: $e');
+      debugPrintStack(stackTrace: st);
+      _hrSeries = const <HrSample>[];
+      notifyListeners();
+    } catch (e, st) {
+      debugPrint('fetchMiHeartRateSeriesLast24h error: $e');
+      debugPrintStack(stackTrace: st);
+      _hrSeries = const <HrSample>[];
+      notifyListeners();
+    }
+  }
+
   int _sumCaloriesKcal(List<HealthDataPoint> points) {
     double sum = 0;
     for (final p in points) {
@@ -346,37 +425,26 @@ class HealthConnectViewModel extends ChangeNotifier {
     return sum.round();
   }
 
-  /// Approximation: count distinct minutes covered by step records (steps > 0).
-  /// Bounded to 24h = 1440 minutes.
   int _movingMinutesFromSteps(List<HealthDataPoint> stepPoints) {
     final activeMinutes = <DateTime>{};
 
     for (final p in stepPoints) {
       if (p.type != HealthDataType.STEPS) continue;
-
       final s = _asIntSteps(p.value);
       if (s <= 0) continue;
 
       DateTime t = p.dateFrom;
-
       while (t.isBefore(p.dateTo)) {
         activeMinutes.add(DateTime(t.year, t.month, t.day, t.hour, t.minute));
         if (activeMinutes.length >= 24 * 60) break;
         t = t.add(const Duration(minutes: 1));
       }
-
       if (activeMinutes.length >= 24 * 60) break;
     }
 
     return activeMinutes.length;
   }
 
-  /// Mi Fitness-like: pick the longest sleep interval (main sleep) in last 24h.
-  /// Steps:
-  /// - Prefer SLEEP_SESSION intervals when present
-  /// - Else use stage intervals
-  /// - Merge overlaps
-  /// - Pick the longest merged interval
   Duration _bestSleepSessionDuration(List<HealthDataPoint> points) {
     final sessions =
     points.where((p) => p.type == HealthDataType.SLEEP_SESSION).toList();
@@ -409,8 +477,6 @@ class HealthConnectViewModel extends ChangeNotifier {
 
     for (int i = 1; i < intervals.length; i++) {
       final it = intervals[i];
-
-      // overlap or touch
       if (!it.start.isAfter(cur.end)) {
         final newEnd = it.end.isAfter(cur.end) ? it.end : cur.end;
         cur = _Interval(cur.start, newEnd);
@@ -431,11 +497,11 @@ class HealthConnectViewModel extends ChangeNotifier {
     return best;
   }
 
-  double? _latestValue(List<HealthDataPoint> points, HealthDataType type) {
+  double? _latestValueByDateFrom(List<HealthDataPoint> points, HealthDataType type) {
     HealthDataPoint? latest;
     for (final p in points) {
       if (p.type != type) continue;
-      if (latest == null || p.dateTo.isAfter(latest.dateTo)) {
+      if (latest == null || p.dateFrom.isAfter(latest.dateFrom)) {
         latest = p;
       }
     }
@@ -445,7 +511,7 @@ class HealthConnectViewModel extends ChangeNotifier {
 
   double? _normalizeSpo2(double? v) {
     if (v == null) return null;
-    if (v <= 1.2) return v * 100.0; // normalize 0..1 to %
+    if (v <= 1.2) return v * 100.0;
     return v;
   }
 
@@ -474,9 +540,25 @@ class HealthConnectViewModel extends ChangeNotifier {
   }
 
   List<HealthDataPoint> _filterBySource(List<HealthDataPoint> points) {
-    final pkg = _sourcePackage;
-    if (pkg == null) return points;
-    return points.where((p) => _matchesSource(p, pkg)).toList(growable: false);
+    if (source == HealthConnectSource.all) return points;
+
+    if (source == HealthConnectSource.googleFit) {
+      return points.where((p) => _matchesSource(p, _kGoogleFitPackage)).toList(growable: false);
+    }
+
+    // Mi Fitness: accept multiple known Xiaomi origins
+    return points.where((p) {
+      for (final pkg in _kMiFitnessPackages) {
+        if (_matchesSource(p, pkg)) return true;
+      }
+      // fallback heuristic by name (still Xiaomi)
+      final name = (_getSourceName(p) ?? '').toLowerCase();
+      if (name.contains('mi') && name.contains('fitness')) return true;
+      if (name.contains('xiaomi')) return true;
+      if (name.contains('wear')) return true;
+      if (name.contains('zepp')) return true;
+      return false;
+    }).toList(growable: false);
   }
 
   bool _matchesSource(HealthDataPoint p, String pkg) {
@@ -491,11 +573,11 @@ class HealthConnectViewModel extends ChangeNotifier {
     if (target == _kGoogleFitPackage) {
       return name.contains('google') && name.contains('fit');
     }
-    if (target == _kMiFitnessPackage) {
-      return (name.contains('mi') && name.contains('fitness')) ||
-          name.contains('xiaomi') ||
-          name.contains('wear');
-    }
+    // Xiaomi handled outside (multiple pkgs), but keep basic heuristics
+    if (name.contains('mi') && name.contains('fitness')) return true;
+    if (name.contains('xiaomi')) return true;
+    if (name.contains('wear')) return true;
+
     return false;
   }
 
@@ -599,6 +681,8 @@ class HealthConnectViewModel extends ChangeNotifier {
     _latestHeartRateBpm = null;
     _latestBloodOxygenPercent = null;
     _hasAdditionalPermissions = false;
+
+    _hrSeries = const <HrSample>[]; // NEW
 
     notifyListeners();
   }

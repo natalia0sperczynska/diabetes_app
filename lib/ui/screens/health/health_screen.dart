@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:health/health.dart';
 
 import '../../view_models/health_connect_view_model.dart';
+import '../../widgets/mi_fitness_hr_chart.dart';
 import '../../widgets/vibe/glitch.dart';
 
 class HealthScreen extends StatefulWidget {
@@ -15,42 +16,26 @@ class HealthScreen extends StatefulWidget {
 }
 
 class _HealthScreenState extends State<HealthScreen> {
-  late final HealthConnectViewModel _googleFitVm;
-  late final HealthConnectViewModel _miFitnessVm;
-
-  @override
-  void initState() {
-    super.initState();
-    // Keep view models stable across rebuilds.
-    _googleFitVm = HealthConnectViewModel(source: HealthConnectSource.googleFit);
-    _miFitnessVm = HealthConnectViewModel(source: HealthConnectSource.miFitness);
-  }
-
-  @override
-  void dispose() {
-    _googleFitVm.dispose();
-    _miFitnessVm.dispose();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Container(color: Theme.of(context).scaffoldBackgroundColor),
-        Positioned.fill(
-          child: Opacity(
-            opacity: 0.15,
-            child: Image.asset(
-              'assets/images/grid.png',
-              repeat: ImageRepeat.repeat,
-              scale: 1.0,
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return DefaultTabController(
+      length: 2,
+      child: Stack(
+        children: [
+          Container(color: Theme.of(context).scaffoldBackgroundColor),
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15,
+              child: Image.asset(
+                'assets/images/grid.png',
+                repeat: ImageRepeat.repeat,
+                scale: 1.0,
+              ),
             ),
           ),
-        ),
-        DefaultTabController(
-          length: 2,
-          child: Scaffold(
+          Scaffold(
             backgroundColor: Colors.transparent,
             appBar: AppBar(
               title: CyberGlitchText(
@@ -62,175 +47,141 @@ class _HealthScreenState extends State<HealthScreen> {
                 ),
               ),
               centerTitle: true,
-              bottom: const TabBar(
-                tabs: [
+              bottom: TabBar(
+                labelColor: colorScheme.onSurface,
+                unselectedLabelColor: colorScheme.onSurface.withOpacity(0.5),
+                indicatorColor: colorScheme.primary,
+                tabs: const [
                   Tab(text: 'Google Fit'),
                   Tab(text: 'Mi Fitness'),
                 ],
               ),
             ),
-            body: TabBarView(
-              children: [
-                ChangeNotifierProvider.value(
-                  value: _googleFitVm,
-                  child: const _HealthConnectTabBody(
-                    source: HealthConnectSource.googleFit,
+            body: SafeArea(
+              child: TabBarView(
+                children: [
+                  ChangeNotifierProvider(
+                    create: (_) => HealthConnectViewModel(
+                      source: HealthConnectSource.googleFit,
+                    ),
+                    child: const _GoogleFitTab(),
                   ),
-                ),
-                ChangeNotifierProvider.value(
-                  value: _miFitnessVm,
-                  child: const _MiFitnessDashboardTab(),
-                ),
-              ],
+                  ChangeNotifierProvider(
+                    create: (_) => HealthConnectViewModel(
+                      source: HealthConnectSource.miFitness,
+                    ),
+                    child: const _MiFitnessTab(),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
 
-class _HealthConnectTabBody extends StatelessWidget {
-  final HealthConnectSource source;
+//  GOOGLE FIT TAB
 
-  const _HealthConnectTabBody({required this.source});
+class _GoogleFitTab extends StatelessWidget {
+  const _GoogleFitTab();
 
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<HealthConnectViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
 
-    // Only show the setup hint for the new Mi Fitness tab, and only when we
-    // have permissions but are not seeing any data from that origin.
-    final showMiHint =
-        source == HealthConnectSource.miFitness &&
-            viewModel.isAuthorized &&
-            !viewModel.isLoading &&
-            viewModel.healthDataList.isEmpty;
-
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            children: [
+              Container(width: 4, height: 24, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              CyberGlitchText(
+                "STATISTICS",
+                style: GoogleFonts.iceland(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+        if (!viewModel.isAuthorized)
+          Expanded(
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () => viewModel.authorize(),
+                child: const Text("Connect to Health Connect"),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: viewModel.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+              onRefresh: () => viewModel.fetchData(),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
-                  Container(width: 4, height: 24, color: colorScheme.primary),
-                  const SizedBox(width: 8),
-                  CyberGlitchText(
-                    "STATISTICS",
-                    style: GoogleFonts.iceland(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
+                  _SummaryCard(steps: viewModel.steps),
+                  const SizedBox(height: 12),
+
+                  _StatsGrid(
+                    peakHourlySteps: viewModel.peakHourlySteps,
+                    peakHourStart: viewModel.peakHourStart,
+                    activeHours: viewModel.activeHours,
+                    avgStepsPerHour: viewModel.avgStepsPerHour,
                   ),
+                  const SizedBox(height: 16),
+
+                  const _SectionHeader(
+                    title: "STEPS (LAST 24H)",
+                    subtitle: "Hourly total",
+                  ),
+                  const SizedBox(height: 10),
+
+                  _StepsLineChart(hourly: viewModel.hourlySteps),
+                  const SizedBox(height: 14),
+
+                  _RawDataExpansion(points: viewModel.healthDataList),
                 ],
               ),
             ),
-            if (!viewModel.isAuthorized)
-              Expanded(
-                child: Center(
-                  child: ElevatedButton(
-                    onPressed: () => viewModel.authorize(),
-                    child: const Text("Connect to Health Connect"),
-                  ),
-                ),
-              )
-            else
-              Expanded(
-                child: viewModel.isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : RefreshIndicator(
-                  onRefresh: () => viewModel.fetchData(),
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-                    children: [
-                      if (showMiHint) ...[
-                        Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: const [
-                                Text(
-                                  "No data from Mi Fitness yet.",
-                                  style: TextStyle(fontWeight: FontWeight.w600),
-                                ),
-                                SizedBox(height: 8),
-                                Text(
-                                  "Open Mi Fitness → Settings → Health Connect and enable sharing (Steps).\n"
-                                      "Then come back and pull-to-refresh.",
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
-                      _SummaryCard(steps: viewModel.steps),
-                      const SizedBox(height: 12),
-                      _StatsGrid(
-                        peakHourlySteps: viewModel.peakHourlySteps,
-                        peakHourStart: viewModel.peakHourStart,
-                        activeHours: viewModel.activeHours,
-                        avgStepsPerHour: viewModel.avgStepsPerHour,
-                      ),
-                      const SizedBox(height: 16),
-                      const _SectionHeader(
-                        title: "STEPS (LAST 24H)",
-                        subtitle: "Hourly total",
-                      ),
-                      const SizedBox(height: 10),
-                      _StepsLineChart(hourly: viewModel.hourlySteps),
-                      const SizedBox(height: 14),
-                      _RawDataExpansion(points: viewModel.healthDataList),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-      floatingActionButton: viewModel.isAuthorized
-          ? FloatingActionButton(
-        onPressed: () => viewModel.fetchData(),
-        child: const Icon(Icons.refresh),
-      )
-          : null,
+          ),
+      ],
     );
   }
 }
 
-class _MiFitnessDashboardTab extends StatelessWidget {
-  const _MiFitnessDashboardTab();
+// MI FITNESS TAB
+
+class _MiFitnessTab extends StatelessWidget {
+  const _MiFitnessTab();
+
+  String _fmtSleep(Duration d) {
+    if (d == Duration.zero) return "-";
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    if (h <= 0) return '${m}m';
+    return '${h}h ${m}m';
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<HealthConnectViewModel>();
     final cs = Theme.of(context).colorScheme;
 
-    if (!vm.isAuthorized) {
-      return Center(
-        child: ElevatedButton(
-          onPressed: vm.authorize,
-          child: const Text("Connect to Health Connect"),
-        ),
-      );
-    }
-
-    if (vm.isLoading) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    return RefreshIndicator(
-      onRefresh: vm.fetchData,
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-        children: [
-          Row(
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
             children: [
               Container(width: 4, height: 24, color: cs.primary),
               const SizedBox(width: 8),
@@ -244,121 +195,170 @@ class _MiFitnessDashboardTab extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
-
-          // Top: Calories / Steps / Moving
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Row(
+        ),
+        if (!vm.isAuthorized)
+          Expanded(
+            child: Center(
+              child: ElevatedButton(
+                onPressed: () => vm.authorize(),
+                child: const Text("Connect to Health Connect"),
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: vm.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : RefreshIndicator(
+              onRefresh: () => vm.fetchData(),
+              child: ListView(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                 children: [
-                  Expanded(
-                    child: _TopMetric(
-                      icon: Icons.local_fire_department,
-                      title: "Calories",
-                      value: vm.caloriesKcal.toString(),
-                      sub: "/500 kcal",
-                    ),
+                  _MiTopStrip(
+                    caloriesKcal: vm.caloriesKcal,
+                    steps: vm.steps,
+                    movingMinutes: vm.movingMinutes,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _TopMetric(
-                      icon: Icons.directions_walk,
-                      title: "Steps",
-                      value: vm.steps.toString(),
-                      sub: "/10000 steps",
+                  const SizedBox(height: 14),
+
+                  if (!vm.hasAdditionalPermissions) ...[
+                    _LockedInfoCard(
+                      title: "Sleep / Heart rate / Blood oxygen",
+                      message:
+                      "These require additional Health Connect read permissions.\n"
+                          "They are requested only after you tap Enable.",
+                      onEnable: () => vm.requestAdditionalPermissions(),
                     ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _MiniMetricCard(
+                          icon: Icons.nights_stay,
+                          title: "Sleep",
+                          value: vm.hasAdditionalPermissions
+                              ? _fmtSleep(vm.sleepDuration)
+                              : "Locked",
+                          subtitle: "Last 24h",
+                          locked: !vm.hasAdditionalPermissions,
+                          onEnable: vm.hasAdditionalPermissions
+                              ? null
+                              : () => vm.requestAdditionalPermissions(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _MiniMetricCard(
+                          icon: Icons.bloodtype,
+                          title: "Blood oxygen",
+                          value: vm.hasAdditionalPermissions
+                              ? (vm.latestBloodOxygenPercent == null
+                              ? "-"
+                              : "${vm.latestBloodOxygenPercent!.round()}%")
+                              : "Locked",
+                          subtitle: "Latest",
+                          locked: !vm.hasAdditionalPermissions,
+                          onEnable: vm.hasAdditionalPermissions
+                              ? null
+                              : () => vm.requestAdditionalPermissions(),
+                        ),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _TopMetric(
-                      icon: Icons.directions_run,
-                      title: "Moving",
-                      value: vm.movingMinutes.toString(),
-                      sub: "/30 mins",
+                  const SizedBox(height: 12),
+
+                  _MiniMetricCard(
+                    icon: Icons.favorite_border,
+                    title: "Heart rate",
+                    value: vm.hasAdditionalPermissions
+                        ? (vm.latestHeartRateBpm == null
+                        ? "-"
+                        : "${vm.latestHeartRateBpm!.round()} BPM")
+                        : "Locked",
+                    subtitle: "Latest",
+                    locked: !vm.hasAdditionalPermissions,
+                    onEnable: vm.hasAdditionalPermissions
+                        ? null
+                        : () => vm.requestAdditionalPermissions(),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  if (vm.hasAdditionalPermissions) ...[
+                    MiFitnessHrChart<HrSample>(
+                      samples: vm.hrSeries,
+                      timeOf: (s) => s.time,
+                      bpmOf: (s) => s.bpm,
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+
+                  Card(
+                    child: Padding(
+                      padding: const EdgeInsets.all(14.0),
+                      child: Text(
+                        "Pull down to refresh. Data is filtered to Mi Fitness origin in Health Connect.",
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                     ),
                   ),
                 ],
               ),
             ),
           ),
-
-          const SizedBox(height: 12),
-
-          // Tiles (no blood pressure)
-          Row(
-            children: [
-              Expanded(
-                child: _TileCard(
-                  icon: Icons.bedtime_outlined,
-                  title: "Sleep",
-                  value: _formatDuration(vm.sleepDuration),
-                  subtitle: "Last 24h",
-                  locked: !vm.hasAdditionalPermissions,
-                  onEnable: vm.requestAdditionalPermissions,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _TileCard(
-                  icon: Icons.favorite_border,
-                  title: "Heart rate",
-                  value: vm.latestHeartRateBpm == null
-                      ? "-"
-                      : "${vm.latestHeartRateBpm!.round()} BPM",
-                  subtitle: "",
-                  locked: !vm.hasAdditionalPermissions,
-                  onEnable: vm.requestAdditionalPermissions,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _TileCard(
-                  icon: Icons.bloodtype_outlined,
-                  title: "Blood oxygen",
-                  value: vm.latestBloodOxygenPercent == null
-                      ? "-"
-                      : "${vm.latestBloodOxygenPercent!.round()}%",
-                  subtitle: "",
-                  locked: !vm.hasAdditionalPermissions,
-                  onEnable: vm.requestAdditionalPermissions,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(child: SizedBox.shrink()),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Text(
-                vm.hasAdditionalPermissions
-                    ? "Pull down to refresh. Data is filtered to Mi Fitness origin in Health Connect."
-                    : "Sleep/Heart rate/Blood oxygen require additional Health Connect read permissions. "
-                    "They are requested only after you tap Enable.",
-              ),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
+}
 
-  static String _formatDuration(Duration d) {
-    if (d == Duration.zero) return "-";
-    final h = d.inHours;
-    final m = d.inMinutes.remainder(60);
-    if (h <= 0) return "${m}m";
-    return "${h}h ${m.toString().padLeft(2, '0')}m";
+class _MiTopStrip extends StatelessWidget {
+  final int caloriesKcal;
+  final int steps;
+  final int movingMinutes;
+
+  const _MiTopStrip({
+    required this.caloriesKcal,
+    required this.steps,
+    required this.movingMinutes,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: _TopMetric(
+                icon: Icons.local_fire_department,
+                title: "Calories",
+                value: "$caloriesKcal",
+                footer: "/500 kcal",
+              ),
+            ),
+            Expanded(
+              child: _TopMetric(
+                icon: Icons.directions_walk,
+                title: "Steps",
+                value: "$steps",
+                footer: "/10000 steps",
+              ),
+            ),
+            Expanded(
+              child: _TopMetric(
+                icon: Icons.directions_run,
+                title: "Moving",
+                value: "$movingMinutes",
+                footer: "/30 mins",
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -366,71 +366,91 @@ class _TopMetric extends StatelessWidget {
   final IconData icon;
   final String title;
   final String value;
-  final String sub;
+  final String footer;
 
   const _TopMetric({
     required this.icon,
     required this.title,
     required this.value,
-    required this.sub,
+    required this.footer,
   });
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
+    final cs = Theme.of(context).colorScheme;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Icon(icon, size: 18),
-            const SizedBox(width: 6),
-            Expanded(
-              child: Text(
-                title,
-                style: t.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        Icon(icon, color: cs.primary),
+        const SizedBox(height: 6),
+        Text(title, style: Theme.of(context).textTheme.bodyMedium),
+        const SizedBox(height: 6),
+        Text(value, style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 2),
-        Text(
-          sub,
-          style: t.bodySmall,
-        ),
+        Text(footer, style: Theme.of(context).textTheme.bodySmall),
       ],
     );
   }
 }
 
-class _TileCard extends StatelessWidget {
-  final IconData icon;
+class _LockedInfoCard extends StatelessWidget {
   final String title;
-  final String value;
-  final String subtitle;
-  final bool locked;
-  final Future<void> Function() onEnable;
+  final String message;
+  final VoidCallback onEnable;
 
-  const _TileCard({
-    required this.icon,
+  const _LockedInfoCard({
     required this.title,
-    required this.value,
-    required this.subtitle,
-    required this.locked,
+    required this.message,
     required this.onEnable,
   });
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).textTheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(message, style: Theme.of(context).textTheme.bodySmall),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: ElevatedButton(
+                onPressed: onEnable,
+                child: const Text("Enable"),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniMetricCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+  final bool locked;
+  final VoidCallback? onEnable;
+
+  const _MiniMetricCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.locked,
+    this.onEnable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
 
     return Card(
       child: Padding(
@@ -438,44 +458,17 @@ class _TileCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icon),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: t.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            if (!locked) ...[
-              Text(
-                value,
-                style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              if (subtitle.isNotEmpty) ...[
-                const SizedBox(height: 2),
-                Text(subtitle, style: t.bodySmall),
-              ],
-            ] else ...[
-              Text(
-                "Locked",
-                style: t.titleLarge?.copyWith(fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                "Tap Enable to grant additional permissions",
-                style: t.bodySmall,
-              ),
-              const SizedBox(height: 10),
+            Icon(icon, color: cs.primary),
+            const SizedBox(height: 8),
+            Text(title, style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Text(value, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: 2),
+            Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+            if (locked && onEnable != null) ...[
+              const SizedBox(height: 12),
               ElevatedButton(
-                onPressed: () async {
-                  await onEnable();
-                },
+                onPressed: onEnable,
                 child: const Text("Enable"),
               ),
             ],
@@ -485,6 +478,7 @@ class _TileCard extends StatelessWidget {
     );
   }
 }
+
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -714,10 +708,10 @@ class _StepsLineChart extends StatelessWidget {
               gridData: const FlGridData(show: true),
               borderData: FlBorderData(show: false),
               titlesData: FlTitlesData(
-                topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
-                rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false)),
+                topTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles:
+                const AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -811,8 +805,8 @@ class _RawDataExpansion extends StatelessWidget {
               return ListTile(
                 dense: true,
                 leading: const Icon(Icons.bug_report_outlined),
-                title:
-                Text(p.type.toString().split('.').last.replaceAll('_', ' ')),
+                title: Text(
+                    p.type.toString().split('.').last.replaceAll('_', ' ')),
                 subtitle: Text("${p.value}\n${p.dateFrom} → ${p.dateTo}"),
                 isThreeLine: true,
               );
