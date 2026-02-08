@@ -85,9 +85,13 @@ class _StatsScreenState extends State<StatsScreen> {
     final statusText = _getStatusLabel(currentValue);
     final trendIcon = _getTrendIcon(currentValue, viewModel.glucoseSpots);
 
-    final int hours = activeSpot.x.toInt();
-    final int minutes = ((activeSpot.x - hours) * 60).toInt();
-    final String timeStr = "${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}";
+    final int totalMinutesOnChart = (activeSpot.x * 60).toInt();
+
+    final DateTime chartTime = DateTime(2024, 1, 1).add(Duration(minutes: totalMinutesOnChart));
+
+    final DateTime correctedTime = chartTime.subtract(const Duration(hours: 1));
+
+    final String timeStr = DateFormat('HH:mm').format(correctedTime);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
