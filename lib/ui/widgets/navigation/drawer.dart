@@ -38,8 +38,8 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.restaurant_menu),
-            title: const Text('Meals'),
+            leading: const Icon(Icons.calculate),
+            title: const Text('Calculator'),
             selected: viewModel.selectedIndex == 1,
             onTap: () {
               context.read<HomeViewModel>().setIndex(1);
@@ -47,14 +47,24 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.stacked_bar_chart),
-            title: const Text('Stats'),
+            leading: const Icon(Icons.restaurant_menu),
+            title: const Text('Meals'),
             selected: viewModel.selectedIndex == 2,
             onTap: () {
               context.read<HomeViewModel>().setIndex(2);
               Navigator.pop(context);
             },
           ),
+          ListTile(
+            leading: const Icon(Icons.stacked_bar_chart),
+            title: const Text('AI Analysis'),
+            selected: viewModel.selectedIndex == 3,
+            onTap: () {
+              context.read<HomeViewModel>().setIndex(3);
+              Navigator.pop(context);
+            },
+          ),
+          const Divider(),
           ListTile(
             leading: const Icon(Icons.monitor_heart),
             title: const Text('Health Connect'),
@@ -67,22 +77,10 @@ class AppDrawer extends StatelessWidget {
               );
             },
           ),
-          ListTile(
-            leading: const Icon(Icons.analytics_outlined),
-            title: const Text('Analysis'),
-            selected: false,
-            onTap: () {
-              Navigator.pop(context);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AnalysisScreen()),
-              );
-            },
-          ),
-            if (isFemale)
+          if (isFemale)
             ListTile(
               leading: const Icon(Icons.female),
-              title : const Text('Menstrual Cycle'),
+              title: const Text('Menstrual Cycle'),
               selected: false,
               onTap: () {
                 Navigator.pop(context);
@@ -90,8 +88,8 @@ class AppDrawer extends StatelessWidget {
                   context,
                   MaterialPageRoute(builder: (context) => const MenstrualCycleScreen()),
                 );
-              },),
-
+              },
+            ),
           ListTile(
             leading: const Icon(Icons.settings),
             title: const Text('Settings'),
@@ -105,7 +103,7 @@ class AppDrawer extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Hero(tag: 'profile', child: Icon(Icons.person),),
+            leading: const Hero(tag: 'profile', child: Icon(Icons.person)),
             title: const Text('Profile'),
             selected: false,
             onTap: () {
