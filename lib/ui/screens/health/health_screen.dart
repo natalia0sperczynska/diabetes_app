@@ -79,9 +79,7 @@ class _HealthScreenState extends State<HealthScreen> {
                 ),
                 ChangeNotifierProvider.value(
                   value: _miFitnessVm,
-                  child: const _HealthConnectTabBody(
-                    source: HealthConnectSource.miFitness,
-                  ),
+                  child: const _MiFitnessDashboardTab(),
                 ),
               ],
             ),
@@ -202,6 +200,288 @@ class _HealthConnectTabBody extends StatelessWidget {
         child: const Icon(Icons.refresh),
       )
           : null,
+    );
+  }
+}
+
+class _MiFitnessDashboardTab extends StatelessWidget {
+  const _MiFitnessDashboardTab();
+
+  @override
+  Widget build(BuildContext context) {
+    final vm = context.watch<HealthConnectViewModel>();
+    final cs = Theme.of(context).colorScheme;
+
+    if (!vm.isAuthorized) {
+      return Center(
+        child: ElevatedButton(
+          onPressed: vm.authorize,
+          child: const Text("Connect to Health Connect"),
+        ),
+      );
+    }
+
+    if (vm.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: vm.fetchData,
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        children: [
+          Row(
+            children: [
+              Container(width: 4, height: 24, color: cs.primary),
+              const SizedBox(width: 8),
+              CyberGlitchText(
+                "MI FITNESS",
+                style: GoogleFonts.iceland(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: cs.onSurface,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Top: Calories / Steps / Moving
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _TopMetric(
+                      icon: Icons.local_fire_department,
+                      title: "Calories",
+                      value: vm.caloriesKcal.toString(),
+                      sub: "/500 kcal",
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _TopMetric(
+                      icon: Icons.directions_walk,
+                      title: "Steps",
+                      value: vm.steps.toString(),
+                      sub: "/10000 steps",
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _TopMetric(
+                      icon: Icons.directions_run,
+                      title: "Moving",
+                      value: vm.movingMinutes.toString(),
+                      sub: "/30 mins",
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Tiles (no blood pressure)
+          Row(
+            children: [
+              Expanded(
+                child: _TileCard(
+                  icon: Icons.bedtime_outlined,
+                  title: "Sleep",
+                  value: _formatDuration(vm.sleepDuration),
+                  subtitle: "Last 24h",
+                  locked: !vm.hasAdditionalPermissions,
+                  onEnable: vm.requestAdditionalPermissions,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _TileCard(
+                  icon: Icons.favorite_border,
+                  title: "Heart rate",
+                  value: vm.latestHeartRateBpm == null
+                      ? "-"
+                      : "${vm.latestHeartRateBpm!.round()} BPM",
+                  subtitle: "",
+                  locked: !vm.hasAdditionalPermissions,
+                  onEnable: vm.requestAdditionalPermissions,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Row(
+            children: [
+              Expanded(
+                child: _TileCard(
+                  icon: Icons.bloodtype_outlined,
+                  title: "Blood oxygen",
+                  value: vm.latestBloodOxygenPercent == null
+                      ? "-"
+                      : "${vm.latestBloodOxygenPercent!.round()}%",
+                  subtitle: "",
+                  locked: !vm.hasAdditionalPermissions,
+                  onEnable: vm.requestAdditionalPermissions,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(child: SizedBox.shrink()),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(14.0),
+              child: Text(
+                vm.hasAdditionalPermissions
+                    ? "Pull down to refresh. Data is filtered to Mi Fitness origin in Health Connect."
+                    : "Sleep/Heart rate/Blood oxygen require additional Health Connect read permissions. "
+                    "They are requested only after you tap Enable.",
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  static String _formatDuration(Duration d) {
+    if (d == Duration.zero) return "-";
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    if (h <= 0) return "${m}m";
+    return "${h}h ${m.toString().padLeft(2, '0')}m";
+  }
+}
+
+class _TopMetric extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String sub;
+
+  const _TopMetric({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.sub,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Icon(icon, size: 18),
+            const SizedBox(width: 6),
+            Expanded(
+              child: Text(
+                title,
+                style: t.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          value,
+          style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 2),
+        Text(
+          sub,
+          style: t.bodySmall,
+        ),
+      ],
+    );
+  }
+}
+
+class _TileCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String value;
+  final String subtitle;
+  final bool locked;
+  final Future<void> Function() onEnable;
+
+  const _TileCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+    required this.locked,
+    required this.onEnable,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(icon),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: t.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            if (!locked) ...[
+              Text(
+                value,
+                style: t.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              if (subtitle.isNotEmpty) ...[
+                const SizedBox(height: 2),
+                Text(subtitle, style: t.bodySmall),
+              ],
+            ] else ...[
+              Text(
+                "Locked",
+                style: t.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                "Tap Enable to grant additional permissions",
+                style: t.bodySmall,
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () async {
+                  await onEnable();
+                },
+                child: const Text("Enable"),
+              ),
+            ],
+          ],
+        ),
+      ),
     );
   }
 }
