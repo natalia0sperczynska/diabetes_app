@@ -24,6 +24,10 @@ class CycleViewModel extends ChangeNotifier {
 
   List<DateTime> get periodDates => _periodDates;
 
+  CycleViewModel() {
+    fetchCycleData();
+  }
+
   int get currentDayOfCycle {
     if (_lastPeriodDate == null) return 0;
     final difference = DateTime.now().difference(_lastPeriodDate!).inDays;
