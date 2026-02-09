@@ -13,6 +13,7 @@ import 'ui/view_models/theme_view_model.dart';
 import 'ui/view_models/statistics_view_model.dart';
 import 'ui/view_models/health_connect_view_model.dart';
 import 'ui/view_models/auth_view_model.dart';
+import 'ui/view_models/doctor_view_model.dart';
 
 import 'ui/screens/meals/services/meal_repository.dart';
 
@@ -22,7 +23,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-
 
   await MealRepository.init();
 
@@ -37,6 +37,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => HealthConnectViewModel()),
         ChangeNotifierProvider(create: (_) => AnalysisViewModel()),
         ChangeNotifierProvider(create: (_) => CycleViewModel()),
+        ChangeNotifierProvider(create: (_) => DoctorViewModel()),
       ],
       child: const MyApp(),
     ),

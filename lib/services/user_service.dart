@@ -39,4 +39,30 @@ class UserService {
   Future<void> deleteUser(String userId) async {
     await _firestore.collection(_usersCollection).doc(userId).delete();
   }
+
+  /// Fetch multiple users by their document IDs (for doctor's patient list).
+  Future<List<UserModel>> getUsersByIds(List<String> userIds) async {
+    if (userIds.isEmpty) return [];
+
+    // Firestore 'whereIn' supports max 30 items per query
+    final List<UserModel> results = [];
+    final chunks = <List<String>>[];
+    for (var i = 0; i < userIds.length; i += 30) {
+      chunks.add(userIds.sublist(
+          i, i + 30 > userIds.length ? userIds.length : i + 30));
+    }
+
+    for (final chunk in chunks) {
+      final snapshot = await _firestore
+          .collection(_usersCollection)
+          .where(FieldPath.documentId, whereIn: chunk)
+          .get();
+
+      for (final doc in snapshot.docs) {
+        results.add(UserModel.fromFirestore(doc));
+      }
+    }
+
+    return results;
+  }
 }

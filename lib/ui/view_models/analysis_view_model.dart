@@ -9,7 +9,7 @@ import 'package:firebase_ai/firebase_ai.dart';
 
 //do przechowania i pobrania danych
 class AnalysisViewModel extends ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  FirebaseService _firebaseService = FirebaseService();
   final String _currentTitle = "Analysis";
   String _aiAnalysisResult = "";
   late String bestDay = bestDayText;
@@ -19,6 +19,11 @@ class AnalysisViewModel extends ChangeNotifier {
   final int _daysToAnalyze = 14;
   List<AgpChartData> _agpData = [];
 
+  /// Update the email used to query Glucose_measurements.
+  void setUserEmail(String email) {
+    _firebaseService = FirebaseService(userEmail: email);
+    _cachedDailyData = [];
+  }
 
   AnalysisStats _stats = AnalysisStats.empty();
 
@@ -37,7 +42,6 @@ class AnalysisViewModel extends ChangeNotifier {
   bool get isAiLoading => _isAiLoading;
 
   List<DailyStats> get cachedDailyData => _cachedDailyData;
-
 
   Future<void> loadData() async {
     _isLoading = true;
@@ -97,7 +101,8 @@ class AnalysisViewModel extends ChangeNotifier {
       var values = hourlyBuckets[hour];
 
       if (values.isEmpty) {
-        result.add(AgpChartData(hour: hour, p5: 0, p25: 0, p50: 0, p75: 0, p95: 0));
+        result.add(
+            AgpChartData(hour: hour, p5: 0, p25: 0, p50: 0, p75: 0, p95: 0));
         continue;
       }
 
@@ -237,8 +242,8 @@ CRITICAL REMINDER: This analysis is for informational support only. It is not me
       _cachedDailyData = newData;
     }
   }
-
 }
+
 class AgpChartData {
   final int hour;
   final double p5;
@@ -247,12 +252,11 @@ class AgpChartData {
   final double p75;
   final double p95;
 
-  AgpChartData({
-    required this.hour,
-    required this.p5,
-    required this.p25,
-    required this.p50,
-    required this.p75,
-    required this.p95
-  });
+  AgpChartData(
+      {required this.hour,
+      required this.p5,
+      required this.p25,
+      required this.p50,
+      required this.p75,
+      required this.p95});
 }

@@ -9,6 +9,9 @@ class UserModel {
   final String gender;
   final String country;
   final String? phoneNumber;
+  final bool isDoctor;
+  final List<String> patientIds;
+  final String? glucoseSourceEmail;
 
   UserModel({
     required this.id,
@@ -19,7 +22,14 @@ class UserModel {
     required this.gender,
     required this.country,
     this.phoneNumber,
+    this.isDoctor = false,
+    this.patientIds = const [],
+    this.glucoseSourceEmail,
   });
+
+  /// The email key used to look up glucose data in Glucose_measurements.
+  /// Falls back to the user's own email when glucoseSourceEmail is not set.
+  String get glucoseEmail => glucoseSourceEmail ?? email;
 
   Map<String, dynamic> toMap() {
     return {
@@ -31,6 +41,9 @@ class UserModel {
       'gender': gender,
       'country': country,
       'phoneNumber': phoneNumber,
+      'isDoctor': isDoctor,
+      'patientIds': patientIds,
+      'glucoseSourceEmail': glucoseSourceEmail,
     };
   }
 
@@ -44,11 +57,15 @@ class UserModel {
       gender: map['gender'] ?? '',
       country: map['country'] ?? '',
       phoneNumber: map['phoneNumber'],
+      isDoctor: map['isDoctor'] ?? false,
+      patientIds: List<String>.from(map['patientIds'] ?? []),
+      glucoseSourceEmail: map['glucoseSourceEmail'],
     );
   }
 
   factory UserModel.fromFirestore(DocumentSnapshot doc) {
     Map<String, dynamic> data = doc.data() as Map<String, dynamic>;
+    data['id'] = doc.id;
     return UserModel.fromMap(data);
   }
 }
