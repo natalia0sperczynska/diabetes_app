@@ -1,3 +1,4 @@
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
@@ -38,9 +39,6 @@ class DoctorViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
 
   // Data for the selected patient
-  List<DailyStats> _dailyStats = [];
-  List<DailyStats> get dailyStats => _dailyStats;
-
   AnalysisStats _analysisStats = AnalysisStats.empty();
   AnalysisStats get analysisStats => _analysisStats;
 
@@ -50,11 +48,9 @@ class DoctorViewModel extends ChangeNotifier {
   DateTime _selectedDate = DateTime.now();
   DateTime get selectedDate => _selectedDate;
 
-  // ── FIX: Added missing getter for the UI ──
   bool get canGoNext {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
-    // Jeśli wybrana data jest wcześniejsza niż dzisiaj, możemy iść dalej
     return _selectedDate.isBefore(today);
   }
 
@@ -71,14 +67,28 @@ class DoctorViewModel extends ChangeNotifier {
 
     try {
       final users = await _userService.getUsersByIds(doctorUser.patientIds);
-      _patients = users
-          .map((u) => PatientInfo(
-        uid: u.id,
-        email: u.email,
-        displayName: '${u.name} ${u.surname}'.trim(),
-        glucoseEmail: u.glucoseEmail,
-      ))
-          .toList();
+
+      _patients = users.map((u) {
+        String sourceEmail = u.glucoseEmail;
+
+        // 1. ZASZYTY FIX DLA GREGORY'EGO
+        if (u.email == 'gregoryhousemd@wp.pl') {
+          sourceEmail = 'anniefocused@gmail.com';
+        }
+
+        // Fallback jeśli puste
+        if (sourceEmail.isEmpty) {
+          sourceEmail = 'anniefocused@gmail.com';
+        }
+
+        return PatientInfo(
+          uid: u.id,
+          email: u.email,
+          displayName: '${u.name} ${u.surname}'.trim(),
+          glucoseEmail: sourceEmail,
+        );
+      }).toList();
+
     } catch (e) {
       debugPrint('DoctorViewModel: Error loading patients: $e');
       _patients = [];
@@ -91,9 +101,9 @@ class DoctorViewModel extends ChangeNotifier {
   // ── Select a patient ──
   Future<void> selectPatient(PatientInfo patient) async {
     _selectedPatient = patient;
-    _dailyStats = [];
     _analysisStats = AnalysisStats.empty();
     _glucoseSpots = [];
+    // Reset daty na dzisiaj przy wejściu w pacjenta
     _selectedDate = DateTime(
       DateTime.now().year,
       DateTime.now().month,
@@ -106,7 +116,6 @@ class DoctorViewModel extends ChangeNotifier {
 
   void clearSelection() {
     _selectedPatient = null;
-    _dailyStats = [];
     _analysisStats = AnalysisStats.empty();
     _glucoseSpots = [];
     notifyListeners();
@@ -116,6 +125,7 @@ class DoctorViewModel extends ChangeNotifier {
     _selectedDate = DateTime(date.year, date.month, date.day);
     notifyListeners();
     if (_selectedPatient != null) {
+      // Przy zmianie daty odświeżamy tylko wykres
       await _loadDayGlucose(_selectedPatient!.glucoseEmail, _selectedDate);
     }
   }
@@ -139,78 +149,126 @@ class DoctorViewModel extends ChangeNotifier {
     try {
       final firestore = FirebaseFirestore.instance;
 
-      // 1. Load DailyStats (last 30 days)
-      final end = DateTime.now();
-      final start = end.subtract(const Duration(days: 30));
+      // 1. Pobranie surowych danych z ostatnich 14 dni
+      final now = DateTime.now();
+      final startStats = now.subtract(const Duration(days: 14));
 
-      final querySnapshot = await firestore
+      final statsQuery = await firestore
           .collection('Glucose_measurements')
           .doc(email)
-          .collection('daily_stats')
-          .where('date', isGreaterThanOrEqualTo: Timestamp.fromDate(start))
-          .orderBy('date', descending: true)
+          .collection('history')
+          .where('Timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startStats))
+          .orderBy('Timestamp', descending: true)
           .get();
 
-      _dailyStats = querySnapshot.docs
-          .map((doc) => DailyStats.fromMap(doc.data()))
-          .toList();
+      final List<double> glucoseValues = [];
 
-      // 2. Load AnalysisStats (summary)
-      if (_dailyStats.isNotEmpty) {
-        double totalAvg = 0;
-        for (var d in _dailyStats) totalAvg += d.averageGlucose;
-        totalAvg /= _dailyStats.length;
+      for (var doc in statsQuery.docs) {
+        if (doc.data().containsKey('Glucose')) {
+          glucoseValues.add((doc['Glucose'] as num).toDouble());
+        }
+      }
 
-        // Pobieramy zakresy z ostatniego dostępnego dnia jako przybliżenie
-        // lub tworzymy średnią (tutaj wersja uproszczona biorąca ostatni dzień)
-        final lastRanges = _dailyStats.first.ranges;
-
-        // ── FIX: Corrected constructor usage based on your error logs ──
-        _analysisStats = AnalysisStats(
-          averageGlucose: totalAvg,
-          gmi: (totalAvg + 46.7) / 28.7,
-          // Wymagane pola (mockujemy lub obliczamy):
-          standardDeviation: 15.0, // Przykładowa wartość (warto obliczyć z danych)
-          coefficientOfVariation: 20.0, // Przykładowa wartość
-          sensorActivePercent: 95.0, // Zakładamy wysokie użycie sensora
-          // Zamiast timeInRange, przekazujemy mapę ranges:
-          ranges: {
-            'inRange': lastRanges['inRange'] ?? 0,
-            'low': lastRanges['low'] ?? 0,
-            'high': lastRanges['high'] ?? 0,
-            'veryLow': lastRanges['veryLow'] ?? 0,
-            'veryHigh': lastRanges['veryHigh'] ?? 0,
-          },
-        );
+      // 2. Obliczenie statystyk (AVG, GMI, CV) lokalnie
+      if (glucoseValues.isNotEmpty) {
+        _analysisStats = _calculateStatsFromValues(glucoseValues);
       } else {
         _analysisStats = AnalysisStats.empty();
       }
 
-      // 3. Load spots for selectedDate
+      // 3. Załadowanie wykresu dla wybranego dnia
       await _loadDayGlucose(email, _selectedDate);
 
     } catch (e) {
       debugPrint('DoctorViewModel: Error loading data for $email: $e');
       _analysisStats = AnalysisStats.empty();
-      _dailyStats = [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
+  /// Oblicza statystyki matematyczne na podstawie listy wyników glukozy
+  AnalysisStats _calculateStatsFromValues(List<double> values) {
+    if (values.isEmpty) return AnalysisStats.empty();
+
+    // -- ŚREDNIA --
+    double sum = values.reduce((a, b) => a + b);
+    double averageRaw = sum / values.length;
+    // Zaokrąglamy średnią do całości (np. 120 mg/dL)
+    double average = double.parse(averageRaw.toStringAsFixed(0));
+
+    // -- ODCHYLENIE STANDARDOWE (SD) --
+    double sumSquaredDiff = 0;
+    for (var x in values) {
+      sumSquaredDiff += pow(x - averageRaw, 2);
+    }
+    double variance = sumSquaredDiff / values.length;
+    double sd = sqrt(variance);
+
+    // -- WSPÓŁCZYNNIK ZMIENNOŚCI (CV) --
+    // Wzór: (SD / Średnia) * 100
+    double cvRaw = (sd / averageRaw) * 100;
+    // Zaokrąglamy do 1 miejsca po przecinku (np. 34.2)
+    double cv = double.parse(cvRaw.toStringAsFixed(1));
+
+    // -- GMI (Glucose Management Indicator) --
+    // Wzór: 3.31 + (0.02392 * średnia)
+    double gmiRaw = 3.31 + (0.02392 * averageRaw);
+    // Zaokrąglamy do 1 miejsca po przecinku (np. 6.5)
+    double gmi = double.parse(gmiRaw.toStringAsFixed(1));
+
+    // -- TIME IN RANGE (Zakresy) --
+    int veryLow = 0; // < 54
+    int low = 0;      // 54 - 69
+    int inRange = 0;  // 70 - 180
+    int high = 0;     // 181 - 250
+    int veryHigh = 0; // > 250
+
+    for (var v in values) {
+      if (v < 54) veryLow++;
+      else if (v < 70) low++;
+      else if (v <= 180) inRange++;
+      else if (v <= 250) high++;
+      else veryHigh++;
+    }
+
+    double total = values.length.toDouble();
+
+    // Helper do procentów (1 miejsce po przecinku)
+    double calcPercent(int count) {
+      if (total == 0) return 0.0;
+      double val = (count / total) * 100;
+      return double.parse(val.toStringAsFixed(1));
+    }
+
+    return AnalysisStats(
+      averageGlucose: average,
+      gmi: gmi,
+      standardDeviation: double.parse(sd.toStringAsFixed(1)),
+      coefficientOfVariation: cv,
+      sensorActivePercent: 98.0, // Mock, brak danych o czasie działania sensora
+      ranges: {
+        'veryLow': calcPercent(veryLow),
+        'low': calcPercent(low),
+        'inTarget': calcPercent(inRange),
+        'high': calcPercent(high),
+        'veryHigh': calcPercent(veryHigh),
+      },
+    );
+  }
+
   Future<void> _loadDayGlucose(String email, DateTime date) async {
     try {
       final firestore = FirebaseFirestore.instance;
-      final startOfDay = date;
-      final endOfDay = date.add(const Duration(days: 1));
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 1));
 
       final querySnapshot = await firestore
           .collection('Glucose_measurements')
           .doc(email)
           .collection('history')
-          .where('Timestamp',
-          isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('Timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
           .where('Timestamp', isLessThan: Timestamp.fromDate(endOfDay))
           .orderBy('Timestamp', descending: false)
           .get();
@@ -221,11 +279,13 @@ class DoctorViewModel extends ChangeNotifier {
         if (data.containsKey('Glucose') && data.containsKey('Timestamp')) {
           final double glucose = (data['Glucose'] as num).toDouble();
           DateTime timestamp;
+
           if (data['Timestamp'] is Timestamp) {
             timestamp = (data['Timestamp'] as Timestamp).toDate();
           } else {
             continue;
           }
+
           final double xValue = timestamp.hour + (timestamp.minute / 60.0);
           spots.add(FlSpot(xValue, glucose));
         }
