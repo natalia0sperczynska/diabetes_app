@@ -54,11 +54,22 @@ class AuthWrapper extends StatelessWidget {
 
         // Show home if authenticated
         if (authViewModel.status == AuthStatus.authenticated) {
-          // Push the logged-in user's glucoseEmail to view models
-          final glucoseEmail = authViewModel.currentUser?.glucoseEmail ??
-              'anniefocused@gmail.com';
-          context.read<StatisticsViewModel>().setUserEmail(glucoseEmail);
-          context.read<AnalysisViewModel>().setUserEmail(glucoseEmail);
+          // Fix logic: Use raw glucoseSourceEmail.
+          // If it's null, fallback to 'anniefocused@gmail.com' (Demo Data).
+          // If user HAS their own data setup, glucoseSourceEmail should be set in DB,
+          // or you can change fallback to authViewModel.currentUser?.email
+
+          final rawSourceEmail = authViewModel.currentUser?.glucoseSourceEmail;
+          final glucoseEmail = rawSourceEmail ?? 'anniefocused@gmail.com';
+
+          // Update ViewModels with the correct email
+          // We use addPostFrameCallback to avoid build-time state updates if needed,
+          // but usually setting it here before returning HomeScreen is okay if setters are safe.
+          // Better approach:
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<StatisticsViewModel>().setUserEmail(glucoseEmail);
+            context.read<AnalysisViewModel>().setUserEmail(glucoseEmail);
+          });
 
           return const HomeScreen();
         }
