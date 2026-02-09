@@ -5,16 +5,12 @@
 *.swp
 .DS_Store
 .atom/
-.build/
 .buildlog/
 .history
 .svn/
-.swiftpm/
-migrate_working_dir/
 
 # IntelliJ related
 *.iml
-.vscode/
 *.ipr
 *.iws
 .idea/
@@ -26,29 +22,16 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
-/coverage/
-.flutter-plugins
-build/
-ios/build/
-ios/Flutter/App.framework
-ios/Flutter/engine.framework
-ios/Flutter/flutter_assets/
-ios/Flutter/.symlinks/
-ios/.generated/
 
-# Logs
-appcenter-debug.log
-appcenter-post-build.log
-appcenter-post-clone.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Web related
+lib/generated_plugin_registrant.dart
 
 # Symbolication related
 app.*.symbols
@@ -61,31 +44,5 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-# Platform-specific files
-android/app/build/
-android/.gradle/
-android/gradle/
-android/gradlew
-android/gradlew.bat
-android/local.properties
-android/key.properties
-*.jks
-*.keystore
-
-# Dependency files
-/pubspec.lock
-/ios/Podfile.lock
-/ios/Pods/
-/ios/Runner/GeneratedPluginRegistrant.*
-
-# Config files
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
 # Firebase
-google-services.json
-android/app/google-services.json
+lib/firebase_options.dart

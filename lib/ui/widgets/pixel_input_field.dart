@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../themes/colors/app_colors.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class PixelInputField extends StatelessWidget {
@@ -25,6 +24,7 @@ class PixelInputField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -33,15 +33,15 @@ class PixelInputField extends StatelessWidget {
           style: GoogleFonts.iceland(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppColors.mainBlue,
+            color: colorScheme.primary,
             letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: AppColors.darkBlue1,
-            border: Border.all(color: AppColors.mainBlue, width: 2),
+            color: colorScheme.surface,
+            border: Border.all(color: colorScheme.primary, width: 2),
             borderRadius: BorderRadius.zero,
           ),
           child: TextField(
@@ -49,7 +49,7 @@ class PixelInputField extends StatelessWidget {
             keyboardType: keyboardType,
             style: GoogleFonts.iceland(
               fontSize: 20,
-              color: Colors.white,
+              color: colorScheme.onSurface,
               letterSpacing: 1.5,
             ),
             onChanged: onChanged,
@@ -61,13 +61,13 @@ class PixelInputField extends StatelessWidget {
               hintText: hint,
               hintStyle: GoogleFonts.iceland(
                 fontSize: 18,
-                color: Colors.white54,
+                color: colorScheme.onSurface.withOpacity(0.54),
                 letterSpacing: 1.2,
               ),
               suffixText: suffix,
               suffixStyle: GoogleFonts.iceland(
                 fontSize: 16,
-                color: AppColors.mainComplement,
+                color: colorScheme.tertiary,
                 letterSpacing: 1.2,
               ),
               contentPadding: const EdgeInsets.symmetric(

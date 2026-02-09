@@ -20,10 +20,16 @@ class HomeViewModel extends ChangeNotifier {
         _currentTitle = "Home";
         break;
       case 1:
-        _currentTitle = "Meals";
+        _currentTitle = "Calculator";
         break;
       case 2:
+        _currentTitle = "Diet";
+        break;
+      case 3:
         _currentTitle = "Stats";
+        break;
+      case 4:
+        _currentTitle = "Health";
         break;
     }
     notifyListeners();
